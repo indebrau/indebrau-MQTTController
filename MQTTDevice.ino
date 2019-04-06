@@ -17,9 +17,9 @@
 #include <DallasTemperature.h> // Vereinfachte Benutzung der DS18B20 Sensoren
 
 // Display
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_SSD1306.h>
+//#include <SPI.h>
+//#include <Wire.h>
+//#include <Adafruit_SSD1306.h>
 
 #include <Adafruit_MAX31865.h> // PT100/1000
 
@@ -70,7 +70,7 @@ const byte DEFAULT_CS_PIN = D1;
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); // placeholder
+//Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); // placeholder
 
 // Differentiate between the two currently supported sensor types
 const String SENSOR_TYPE_ONE_WIRE = "OneWire";

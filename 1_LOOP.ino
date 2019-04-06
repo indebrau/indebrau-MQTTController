@@ -22,7 +22,7 @@ void loop()
       mqttreconnect();
     }
 
-    drawDisplayContent();
+//    drawDisplayContent();
     client.loop();
     lastToggledSys = millis();
   }

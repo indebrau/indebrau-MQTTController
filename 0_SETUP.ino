@@ -50,12 +50,12 @@ void setup()
   setupServer();
 
   // start display
-  Wire.begin(D2, D1);
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
-    Serial.println(F("SSD1306 allocation failed"));
-  }
-  display.clearDisplay();
-  display.display();
+  //  Wire.begin(D2, D1);
+  //  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
+  //    Serial.println(F("SSD1306 allocation failed"));
+  //  }
+  //  display.clearDisplay();
+  //  display.display();
 }
 
 void setupServer()
