@@ -14,3 +14,12 @@ void drawDisplayContent(void) {
   display.print("C");
   display.display();
 }
+
+void drawDisplayContentError(void) {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(2, 7);
+  display.print("No Signal!");
+  display.display();
+}

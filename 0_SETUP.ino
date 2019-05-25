@@ -2,7 +2,9 @@ void setup()
 {
   Serial.begin(115200);
 
-  // declare OneWire and PT Pins pin as used
+  // declare OneWire, Display and PT Pins pin as used
+  pins_used[D1] = true;
+  pins_used[D2] = true;
   pins_used[ONE_WIRE_BUS] = true;
   pins_used[PT_PINS[0]] = true;
   pins_used[PT_PINS[1]] = true;
@@ -24,7 +26,14 @@ void setup()
   // Load settings
   ESP.wdtFeed();
   loadConfig();
-
+  
+  // start display
+  Wire.begin(D2, D1);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
+    Serial.println(F("SSD1306 allocation failed"));
+  }
+  drawDisplayContentError();
+  
   // WiFi Manager
   ESP.wdtFeed();
   WiFi.hostname(mqtt_clientid);
@@ -33,6 +42,7 @@ void setup()
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&cstm_mqtthost);
   if(!wifiManager.autoConnect(mqtt_clientid)) {
+    drawDisplayContentError();
     Serial.println("Connection not possible, timeout, restart!");
     rebootDevice();
   }
@@ -52,14 +62,7 @@ void setup()
   // start webserver
   ESP.wdtFeed();
   setupServer();
-
-  // start display
-  Wire.begin(D2, D1);
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
-    Serial.println(F("SSD1306 allocation failed"));
-  }
-  display.clearDisplay();
-  display.display();
+  
 }
 
 void setupServer()
