@@ -19,7 +19,7 @@ void setup()
   }
 
   // Set device name
-  snprintf(mqtt_clientid, 25, "ESP8266-%08X", mqtt_chip_key);
+  snprintf(mqtt_clientid, 25, "MQTTDevice-%08X", mqtt_chip_key);
 
   // Load settings
   ESP.wdtFeed();
@@ -28,10 +28,14 @@ void setup()
   // WiFi Manager
   ESP.wdtFeed();
   WiFi.hostname(mqtt_clientid);
+  wifiManager.setTimeout(20);
   WiFiManagerParameter cstm_mqtthost("host", "cbpi ip", mqtthost, 16);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&cstm_mqtthost);
-  wifiManager.autoConnect("MQTTDevice");
+  if(!wifiManager.autoConnect(mqtt_clientid)) {
+    Serial.println("Connection not possible, timeout, restart!");
+    rebootDevice();
+  }
   strcpy(mqtthost, cstm_mqtthost.getValue());
 
   // save changes

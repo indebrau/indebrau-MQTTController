@@ -10,7 +10,10 @@ void loop()
     // WiFi Status prüfen, ggf. Reconnecten
     if (WiFi.status() != WL_CONNECTED)
     {
-      wifiManager.autoConnect("MQTTDevice");
+      if(!wifiManager.autoConnect(mqtt_clientid)) {
+        Serial.println("Connection not possible, timeout, restart!");
+        rebootDevice();
+      }
     }
 
     // OTA
