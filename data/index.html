@@ -16,12 +16,11 @@
     <div class="container">
       <div class="row">
         <div class="col">
-          <h1 class="text-center">Overview</h1>
+          <h1 class="text-center">MQTT Device</h1>
         </div>
         <div class="col-md-auto">
           <a href="config.json" download="config.json" class="btn btn-outline-primary" id="btn_downloadConfig">Download
             Config</a>
-          <button type="button" class="btn btn-outline-danger" id="btn_disable_mqtt">Disable MQTT</button>
           <button type="button" class="btn btn-outline-danger" id="btn_reboot">Reboot</button>
         </div>
       </div>
@@ -89,6 +88,22 @@
       </div>
     </div>
   </div>
+
+    <!-- Footer -->
+    <div class="py-2">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            <div id="version" />
+          </div>
+          <div>
+            Firmware Web Frontend: v1.0 (14.03.2020)
+          </div>
+      </div>
+    </div>
+  <div class="float-sm-left">
+  </div>
+
 
   <!-- Actor Window-->
   <div class="modal fade" actor_id="" draggable="true" id="actor_modal">
@@ -211,8 +226,8 @@
   </div>
 
   <!-- JavaScript -->
-  <script src="jquery-3.2.1.min.js"></script>
-  <script src="bootstrap.bundle.js"></script>
+  <script src="jquery-3.4.1.min.js"></script>
+  <script src="bootstrap.bundle.min.js"></script>
   <script type="text/javascript">
 
     /* updates sensors, called periodically */
@@ -578,16 +593,10 @@
       });;
     });
 
-    /* click on Disable MQTT button */
-    $("#btn_disable_mqtt").click(function () {
-      $.ajax({
-        url: '/mqttOff',
-        type: 'POST',
-        async: true,
-        cache: false
-      });
+    /* after initial loading is done, once get the firmware version */
+    $.get("/version", function (data) {
+        $('#version').html("Firmware Device: " + data);
     });
-
   </script>
 
 </html>

@@ -29,7 +29,7 @@ void setup()
   ESP.wdtFeed();
   WiFi.hostname(mqtt_clientid);
   wifiManager.setTimeout(20);
-  WiFiManagerParameter cstm_mqtthost("host", "cbpi ip", mqtthost, 16);
+  WiFiManagerParameter cstm_mqtthost("host", "MQTT server address","", 16);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&cstm_mqtthost);
   if(!wifiManager.autoConnect(mqtt_clientid)) {
@@ -94,7 +94,7 @@ void setupServer()
   server.on("/delActor", handleDelActor);
 
   server.on("/reboot", rebootDevice); // reboots the device
-  server.on("/mqttOff", turnMqttOff); // turns off MQTT completly until reboot
+  server.on("/version", getVersion); // returns the (hardcoded) firmware version of this device
 
   server.onNotFound(handleWebRequests); // fallback
 

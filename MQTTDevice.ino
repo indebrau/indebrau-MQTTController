@@ -38,6 +38,9 @@
 
 /*########## CONSTANTS #########*/
 
+const String DEVICE_VERSION = "v1.0 No Display (14.03.2020)";
+
+
 // PINS
 // Change according to your wiring (see also 99_PINMAP_WEMOS_D1Mini)
 #define ONE_WIRE_BUS D8
@@ -48,7 +51,7 @@
   the CS PIN, meaning you need one additional pin per sensor
 */
 const byte PT_PINS[3] = {D4, D3, D0};
-// default pin for the CS of a PT sensor (for initial initialization, can be overwritten)
+// default pin for the CS of a PT sensor (for initialization, can later be overwritten)
 const byte DEFAULT_CS_PIN = D1;
 
 // ranges from 9 to 12, higher is better (and slower!)
@@ -100,7 +103,7 @@ const String PIN_NAMES[NUMBER_OF_PINS] = {"D0", "D1", "D2", "D3", "D4", "D5", "D
 
 const byte NUMBER_OF_SENSORS_MAX = 6;            // max number of sensors per sensor type
 const byte NUMBER_OF_ACTORS_MAX = 6;             // max number of actors
-const int DEFAULT_SENSOR_UPDATE_INTERVAL = 5000; // how often should sensors update
+const int DEFAULT_SENSOR_UPDATE_INTERVAL = 3000; // how often should sensors update
 
 /*########## VARIABLES #########*/
 
@@ -133,11 +136,8 @@ byte numberOfOneWireSensorsFound = 0; // OneWire sensors found on the bus
 
 byte numberOfActors = 0; // current number of actors
 
-char mqtthost[16] = "192.168.178.234"; // default value of MQTT Server
+char mqtthost[16] = ""; // default value of MQTT Server (will initially be displayed in config box)
 long mqttconnectlasttry;
-// if false, no mqtt communcation is send or received
-// (security feature to turn on when leaving the brewery)
-bool mqttCommunication = true;       // TODO: Not yet implemented!
 int mqtt_chip_key = ESP.getChipId(); // chip id for distinguishind multiple devices in a network
 char mqtt_clientid[25];              // client id name
 
