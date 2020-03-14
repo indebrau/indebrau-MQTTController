@@ -8,3 +8,15 @@ void rebootDevice() {
 void getVersion() {
   server.send(200, "text/plain", DEVICE_VERSION);
 }
+
+void getMqttStatus() {
+  String returnMessage;
+  String mqttAddress(mqtthost);
+  if(client.connected()){
+     returnMessage = "successfully subscribed to " + mqttAddress;
+  }
+  else{
+    returnMessage = "WARNING, NOT SUBSCRIBED TO " + mqttAddress;
+  }
+  server.send(200, "text/plain", returnMessage);
+}

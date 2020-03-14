@@ -10,6 +10,7 @@ void loop()
     // WiFi Status prüfen, ggf. Reconnecten
     if (WiFi.status() != WL_CONNECTED)
     {
+      drawDisplayContentError();
       if(!wifiManager.autoConnect(mqtt_clientid)) {
         Serial.println("Connection not possible, timeout, restart!");
         rebootDevice();
@@ -25,7 +26,7 @@ void loop()
       mqttreconnect();
     }
 
-//    drawDisplayContent();
+    drawDisplayContent();
     client.loop();
     lastToggledSys = millis();
   }

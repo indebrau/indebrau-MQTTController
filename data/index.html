@@ -99,6 +99,7 @@
           <div>
             Firmware Web Frontend: v1.0 (14.03.2020)
           </div>
+          <div id="mqttStatus" />
       </div>
     </div>
   <div class="float-sm-left">
@@ -230,8 +231,11 @@
   <script src="bootstrap.bundle.min.js"></script>
   <script type="text/javascript">
 
-    /* updates sensors, called periodically */
+    /* updates sensor-, actor-, induction- and mqtt status, called periodically */
     function refresh() {
+      $.get("/mqttStatus", function (data) {
+        $('#mqttStatus').html("MQTT Status: " + data);
+      });
       $.get("/reqSensors", function (data) {
         let content = "";
         data.forEach(function (element) {
@@ -593,10 +597,12 @@
       });;
     });
 
-    /* after initial loading is done, once get the firmware version */
+    /* after initial loading is done, once get the firmware version*/
     $.get("/version", function (data) {
         $('#version').html("Firmware Device: " + data);
     });
+  </script>
+
   </script>
 
 </html>

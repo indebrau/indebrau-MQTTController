@@ -2,16 +2,22 @@ void setup()
 {
   Serial.begin(115200);
 
-  // declare OneWire and PT Pins pin as used
+  // declare OneWire and PT Pins as used
   pins_used[ONE_WIRE_BUS] = true;
   pins_used[PT_PINS[0]] = true;
   pins_used[PT_PINS[1]] = true;
   pins_used[PT_PINS[2]] = true;
-
-  // Sensoren Starten
+  
+  // declare display pins as used (if applicable)
+  if(USE_DISPLAY){
+    pins_used[D1] = true;
+    pins_used[D2] = true;
+  }
+  
+  // Start sensors
   DS18B20.begin();
 
-  // Load spif file system laden
+  // Load spif file system
   ESP.wdtFeed();
   if (!SPIFFS.begin())
   {
@@ -29,7 +35,7 @@ void setup()
   ESP.wdtFeed();
   WiFi.hostname(mqtt_clientid);
   wifiManager.setTimeout(20);
-  WiFiManagerParameter cstm_mqtthost("host", "MQTT server address","", 16);
+  WiFiManagerParameter cstm_mqtthost("host", "MQTT server address", mqtthost, 16);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.addParameter(&cstm_mqtthost);
   if(!wifiManager.autoConnect(mqtt_clientid)) {
@@ -53,13 +59,15 @@ void setup()
   ESP.wdtFeed();
   setupServer();
 
-  // start display
-  //  Wire.begin(D2, D1);
-  //  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
-  //    Serial.println(F("SSD1306 allocation failed"));
-  //  }
-  //  display.clearDisplay();
-  //  display.display();
+  // start display if applicable
+  if(USE_DISPLAY) {
+    Wire.begin(D2, D1);
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
+    Serial.println(F("SSD1306 allocation failed"));
+    }
+    drawDisplayContentError();
+  }
+
 }
 
 void setupServer()
@@ -95,6 +103,7 @@ void setupServer()
 
   server.on("/reboot", rebootDevice); // reboots the device
   server.on("/version", getVersion); // returns the (hardcoded) firmware version of this device
+  server.on("/mqttStatus", getMqttStatus); // returns the current MQTT connection status
 
   server.onNotFound(handleWebRequests); // fallback
 
