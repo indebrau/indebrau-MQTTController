@@ -78,15 +78,18 @@ void mqttreconnect()
     // Delay prüfen
     if (millis() > mqttconnectlasttry + MQTT_CONNECT_DELAY)
     {
-      Serial.print("MQTT Trying to connect. Name:");
-      Serial.print(mqtt_clientid);
+      String mqttAddress(mqtthost);
+      Serial.print("MQTT trying to connect to ");
+      Serial.print(mqttAddress);
+      Serial.print(" with name ");
+      Serial.print(deviceName);
       for (int i = 0; i < MQTT_NUMBER_OF_TRIES; i++)
       {
         Serial.print(".. Try #");
         Serial.print(i + 1);
-        if (client.connect(mqtt_clientid))
+        if (client.connect(deviceName))
         {
-          Serial.print(".. Success. Subscribing.");
+          Serial.print("..Successful. Subscribing.");
           goto Subscribe;
         }
         delay(5);
@@ -94,7 +97,7 @@ void mqttreconnect()
       mqttconnectlasttry = millis();
       Serial.print(".. Failed. Trying again in ");
       Serial.print(MQTT_CONNECT_DELAY / 1000);
-      Serial.println(" seconds");
+      Serial.println(" seconds.");
       return;
     }
   }

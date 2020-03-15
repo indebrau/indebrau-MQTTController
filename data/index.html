@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="theme.css" type="text/css">
 </head>
 
-<body onload="setInterval(refresh, 3000)">
+<body onload="setInterval(refresh, 5000)">
 
   <!-- Header -->
   <div class="py-2">
@@ -19,6 +19,7 @@
           <h1 class="text-center">MQTT Device</h1>
         </div>
         <div class="col-md-auto">
+          <a href="" class="btn btn-outline-primary" data-target="#config_modal" data-toggle="modal">Configure Device</a>
           <a href="config.json" download="config.json" class="btn btn-outline-primary" id="btn_downloadConfig">Download
             Config</a>
           <button type="button" class="btn btn-outline-danger" id="btn_reboot">Reboot</button>
@@ -89,22 +90,27 @@
     </div>
   </div>
 
-    <!-- Footer -->
-    <div class="py-2">
-      <div class="container">
-        <div class="row">
-          <div class="col">
+  <!-- Footer -->
+  <div class="py-2">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <div>
+            Firmware Web Frontend: v1.0.1 (15.03.2020)
+          </div>
+          <div>
             <div id="version" />
           </div>
           <div>
-            Firmware Web Frontend: v1.0 (14.03.2020)
+            <div id="display" />
           </div>
-          <div id="mqttStatus" />
+          <div>
+            <div id="mqttStatus" />
+          </div>
+        </div>
       </div>
     </div>
-  <div class="float-sm-left">
   </div>
-
 
   <!-- Actor Window-->
   <div class="modal fade" actor_id="" draggable="true" id="actor_modal">
@@ -133,7 +139,7 @@
             <label class="form-check-label" for="modal_actor_inverted"> Inverted GPIO </label>
           </div>
         </div>
-        <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_actor_btn_save">Save changes</button>
+        <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_actor_btn_save">Save Changes</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> <button type="button"
             class="btn btn-danger" id="modal_actor_btn_delete">Delete Actor</button></div>
       </div>
@@ -180,7 +186,7 @@
           </form>
         </div>
         <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_sensor_btn_save">Save
-            changes</button> <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            Changes</button> <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           <button type="button" class="btn btn-danger" id="modal_sensor_btn_delete">Delete Sensor</button> </div>
       </div>
     </div>
@@ -221,10 +227,37 @@
           </div>
         </div>
         <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_induction_btn_save">Save
-            changes</button> <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> </div>
+            Changes</button> <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> </div>
       </div>
     </div>
   </div>
+
+  <!-- Config Window-->
+  <div class="modal fade" actor_id="" draggable="true" id="config_modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Configure Device</h5> <button type="button" class="close" data-dismiss="modal"> <span>×</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="modal_mqtt_address">MQTT Server Address</label>
+            <input type="text" class="form-control" placeholder="" id="modal_mqtt_address">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="modal_use_display">
+            <label for="modal_use_display">Use Display</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="modal_config_btn_save">Save Changes</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- JavaScript -->
   <script src="jquery-3.4.1.min.js"></script>
@@ -234,7 +267,7 @@
     /* updates sensor-, actor-, induction- and mqtt status, called periodically */
     function refresh() {
       $.get("/mqttStatus", function (data) {
-        $('#mqttStatus').html("MQTT Status: " + data);
+        $('#mqttStatus').html(data);
       });
       $.get("/reqSensors", function (data) {
         let content = "";
@@ -321,7 +354,6 @@
       $.ajax({
         url: '/reqActorConfig?id=' + actorid + '&req=name',
         type: 'get',
-        dataType: 'html',
         async: false,
         cache: false,
         success: function (data) {
@@ -331,7 +363,6 @@
       $.ajax({
         url: '/reqActorConfig?id=' + actorid + '&req=script',
         type: 'get',
-        dataType: 'html',
         async: false,
         cache: false,
         success: function (data) {
@@ -341,7 +372,6 @@
       $.ajax({
         url: '/reqActorConfig?id=' + actorid + '&req=inverted',
         type: 'get',
-        dataType: 'html',
         async: false,
         cache: false,
         success: function (data) {
@@ -372,7 +402,6 @@
       $.ajax({
         url: '/setActor?id=' + actorid + '&name=' + actorname + '&script=' + actorscript + '&pin=' + actorpin + '&inverted=' + actorinverted,
         type: 'POST',
-        dataType: 'html',
         async: false,
         cache: false
       });
@@ -386,7 +415,6 @@
       $.ajax({
         url: '/delActor?id=' + actorid,
         type: 'POST',
-        dataType: 'html',
         async: false,
         cache: false
       });
@@ -403,7 +431,7 @@
       modal.attr('sensor_id', sensorId);
       modal.attr('sensor_type', sensorType);
 
-      // Careful here, has to match name in sketch! ("OneWire")
+      // Careful here, has to match name in firmware! ("OneWire")
       if (sensorType == "OneWire") {
         // ui adjustments
         $("#modal_sensor_one_wire_sensor").show();
@@ -415,7 +443,6 @@
           $.ajax({
             url: '/reqSensorConfig?id=' + sensorId + '&type=' + sensorType,
             type: 'get',
-            dataType: 'json',
             async: false,
             cache: false,
             context: this,
@@ -504,8 +531,7 @@
     });
 
     /* click on edit induction button */
-    $('#induction_modal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget);
+    $('#induction_modal').on('show.bs.modal', function () {
       var mqtttopic;
       var isEnabled;
       var pin_white;
@@ -516,7 +542,6 @@
       $.ajax({
         url: '/reqInductionConfig?req=isEnabled',
         type: 'get',
-        dataType: 'html',
         async: false,
         cache: false,
         success: function (data) {
@@ -526,7 +551,6 @@
       $.ajax({
         url: '/reqInductionConfig?req=topic',
         type: 'get',
-        dataType: 'html',
         async: false,
         cache: false,
         success: function (data) {
@@ -536,7 +560,6 @@
       $.ajax({
         url: '/reqInductionConfig?req=delay',
         type: 'get',
-        dataType: 'html',
         async: false,
         cache: false,
         success: function (data) {
@@ -577,12 +600,54 @@
       $.ajax({
         url: '/setIndu?enabled=' + isenabled + '&topic=' + mqtttopic + '&pinwhite=' + pin_white + '&pinyellow=' + pin_yellow + '&pinblue=' + pin_blue + '&delay=' + delay,
         type: 'POST',
-        dataType: 'html',
         async: false,
         cache: false
       });
       modal.modal('hide')
     });
+
+    /* click on "Configure Device" button */
+    $('#config_modal').on('show.bs.modal', function () {
+
+      var modal = $(this);
+      $.ajax({
+        url: '/getSysConfig',
+        type: 'get',
+        dataType: 'json',
+        async: false,
+        cache: false,
+        success: function (data) {
+          modal.find('#modal_mqtt_address').val(data.mqttAddress);
+          if (data.useDisplay) { modal.find('#modal_use_display').prop("checked", true); }
+          else { modal.find('#modal_use_display').prop("checked", false); }
+        }
+      });
+    });
+
+    /* click on "Save Changes" in "Configure Device" view */
+    $("#modal_config_btn_save").click(function () {
+      var modal = $('#config_modal');
+
+      var mqttAddress = modal.find('#modal_mqtt_address').val();
+
+      if (modal.find('#modal_use_display').prop("checked") == true) {
+        var useDisplay = true;
+      } else {
+        var useDisplay = false;
+      }
+
+      $.ajax({
+        url: '/setSysConfig?mqttAddress=' + mqttAddress + '&useDisplay=' + useDisplay,
+        type: 'POST',
+        async: false,
+        cache: false
+      }).done(function (msg) {
+        modal.modal('hide')
+        alert(msg + "\n Page will be reloaded now!");
+        window.location.reload(true);
+      });;
+    });
+
 
     /* click on reboot button */
     $("#btn_reboot").click(function () {
@@ -592,14 +657,17 @@
         async: false,
         cache: false
       }).done(function (msg) {
-        alert("Device says: " + msg + "\n Page will be reloaded now!");
+        alert(msg + "\n Page will be reloaded now!");
         window.location.reload(true);
       });;
     });
 
-    /* after initial loading is done, once get the firmware version*/
+    /* after initial loading is done, once get the firmware version and check for display usage */
     $.get("/version", function (data) {
-        $('#version').html("Firmware Device: " + data);
+      $('#version').html("Firmware Device: " + data);
+    });
+    $.get("/getUseDisplay", function (data) {
+      $('#display').html(data);
     });
   </script>
 

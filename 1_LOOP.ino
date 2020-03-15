@@ -11,7 +11,7 @@ void loop()
     if (WiFi.status() != WL_CONNECTED)
     {
       drawDisplayContentError();
-      if(!wifiManager.autoConnect(mqtt_clientid)) {
+      if(!wifiManager.autoConnect(deviceName)) {
         Serial.println("Connection not possible, timeout, restart!");
         rebootDevice();
       } 

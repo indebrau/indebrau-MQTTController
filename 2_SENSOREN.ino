@@ -159,6 +159,12 @@ class PTSensor
           pins_used[csPin] = false;
           csPin = byteNewCSPin;
           pins_used[csPin] = true;
+          // if sensor overlapped with display (display was activated after sensor was configured),
+          // this prevents marking a display pin as free (not very nice, but works)
+          if(use_display){
+            pins_used[D1] = true;
+            pins_used[D2] = true;
+          }
           newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
           numberOfWires = newNumberOfWires;
           name = newName;
@@ -218,7 +224,7 @@ PTSensor ptSensors[NUMBER_OF_SENSORS_MAX] = {
   PTSensor("", 0, "", ""),
   PTSensor("", 0, "", ""),
   PTSensor("", 0, "", ""),
-  PTSensor("", 0, "", ""),
+  PTSensor("", 0, "", "")
 };
 
 /* Called in loop() */
@@ -335,6 +341,12 @@ void handleDelSensor()
   {
     // first declare the pin unused
     pins_used[ptSensors[id].csPin] = false;
+    // if sensor overlapped with display (display was activated after sensor was configured),
+    // this prevents marking a display pin as free (not very nice, but works)
+    if(use_display){
+      pins_used[D1] = true;
+      pins_used[D2] = true;
+    }
     // move all sensors following the given id one to the front of array,
     // effectively overwriting the sensor to be deleted..
     for (int i = id; i < numberOfPTSensors; i++)

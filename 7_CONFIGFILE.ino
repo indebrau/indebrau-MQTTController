@@ -3,7 +3,7 @@ bool loadConfig()
   File configFile = SPIFFS.open("/config.json", "r");
   if (!configFile)
   {
-    Serial.println("Failed to open config file");
+    Serial.println("Failed to open config file (does it exist?");
     return false;
   }
   else
@@ -128,6 +128,8 @@ bool loadConfig()
   // General Settings
   String json_mqtthost = json["MQTTHOST"];
   json_mqtthost.toCharArray(mqtthost, 16);
+  
+  use_display = json["USEDISPLAY"];
 
   return true;
 }
@@ -196,6 +198,8 @@ bool saveConfig()
 
   // Write General Stuff
   json["MQTTHOST"] = mqtthost;
+  json["USEDISPLAY"] = use_display;
+  
   json.printTo(configFile);
   return true;
 }
@@ -203,5 +207,5 @@ bool saveConfig()
 /* Needed for the WifiManager */
 void saveConfigCallback()
 {
-  Serial.println("Should save config");
+  Serial.println("saveConfigCallback: did not do nothing (as intentded)");
 }

@@ -45,15 +45,22 @@ class Actor
     }
 
     void change(String pin, String argument, String name, String inverted)
-    {
-      // Set PIN
+    {     
+      // set old pin to high
       if (isPin(pin_actor))
       {
         digitalWrite(pin_actor, HIGH);
         pins_used[pin_actor] = false;
         delay(5);
       }
-
+      // if actor overlapped with display (display was activated after sensor was configured),
+      // this prevents marking a display pin as free (not very nice, but works)
+      if(use_display){
+        pins_used[D1] = true;
+        pins_used[D2] = true;
+      }
+      
+      // set new pin to high
       pin_actor = StringToPin(pin);
       if (isPin(pin_actor))
       {
@@ -285,7 +292,7 @@ void handleDelActor()
 
   for (int i = id; i < numberOfActors; i++)
   {
-    if (i == 5)
+    if (i == NUMBER_OF_ACTORS_MAX - 1)
     {
       actors[i].change("", "", "", "");
     }

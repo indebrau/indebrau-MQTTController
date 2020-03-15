@@ -38,9 +38,8 @@
 
 /*########## CONSTANTS #########*/
 
-const String DEVICE_VERSION = "v1.0 (14.03.2020)";
-const boolean USE_DISPLAY = false;
-
+const String DEVICE_VERSION = "v1.0.1 (15.03.2020)";
+const int ESP_CHIP_ID = ESP.getChipId(); // chip id for distinguishing multiple devices in a network
 
 // PINS
 // Change according to your wiring (see also 99_PINMAP_WEMOS_D1Mini)
@@ -69,7 +68,7 @@ const byte DEFAULT_CS_PIN = D1;
 
 // how often should the system update it's state (wifi, ota, mqtt)
 #define SYS_UPDATE 1000
-// how often should sensors', actors' and indu update routine be called
+// how often should sensor, actor and induction cooker update routine be called
 #define UPDATE 1000
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -79,10 +78,12 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); // placeholder
 // Differentiate between the two currently supported sensor types
 const String SENSOR_TYPE_ONE_WIRE = "OneWire";
 const String SENSOR_TYPE_PT = "PTSensor";
-const long MQTT_CONNECT_DELAY = 30000;
-const byte MQTT_NUMBER_OF_TRIES = 3;
 
-// Induktion Signallaufzeiten
+// MQTT reconnect settings
+const long MQTT_CONNECT_DELAY = 10000;
+const byte MQTT_NUMBER_OF_TRIES = 1;
+
+// Induction cooker signal timings
 const int SIGNAL_HIGH = 5120;
 const int SIGNAL_HIGH_TOL = 1500;
 const int SIGNAL_LOW = 1280;
@@ -92,19 +93,19 @@ const int SIGNAL_START_TOL = 10;
 const int SIGNAL_WAIT = 10;
 const int SIGNAL_WAIT_TOL = 5;
 
-// Prozentuale Abstufung zwischen den Stufen
+// Percentages between the different steps (induction cooker)
 const byte PWR_STEPS[] = {0, 20, 40, 60, 80, 100};
 
-// Error Messages der Induktionsplatte
+// Error messages of the induction cooker
 const String ERROR_MESSAGES[10] = {"E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "EC"};
 
 const byte NUMBER_OF_PINS = 9;
 const byte PINS[NUMBER_OF_PINS] = {D0, D1, D2, D3, D4, D5, D6, D7, D8};
 const String PIN_NAMES[NUMBER_OF_PINS] = {"D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"};
 
-const byte NUMBER_OF_SENSORS_MAX = 6;            // max number of sensors per sensor type
+const byte NUMBER_OF_SENSORS_MAX = 6;            // max number of sensors per sensor type (if changed, please init accordingly!)
 const byte NUMBER_OF_ACTORS_MAX = 6;             // max number of actors
-const int DEFAULT_SENSOR_UPDATE_INTERVAL = 2000; // how often should sensors update
+const int DEFAULT_SENSOR_UPDATE_INTERVAL = 1000; // how often should sensors update
 
 /*########## VARIABLES #########*/
 
@@ -114,9 +115,9 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 WiFiServer TelnetServer(TELNET_SERVER_PORT); // OTA
 
-//  Binäre Signale für Induktionsplatte
+// Binary signals for induction cooker
 int CMD[6][33] = {
-  {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, // Aus
+  {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, // Off
   {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P1
   {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0}, // P2
   {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0}, // P3
@@ -124,7 +125,7 @@ int CMD[6][33] = {
   {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}  // P5
 };
 
-// careful here, these are not the wemos-numbered GIPO (D0-D8) but all of them!
+// careful here, these are not the Wemos-numbered GIPO (D0-D8) but all of them!
 bool pins_used[17]; // determines which pins currently are in use
 
 byte numberOfPTSensors = 0; // current number of PT100 sensors
@@ -138,9 +139,9 @@ byte numberOfOneWireSensorsFound = 0; // OneWire sensors found on the bus
 byte numberOfActors = 0; // current number of actors
 
 char mqtthost[16] = ""; // mqtt server ip
+bool use_display = false; // if used, Pins D1 and D2 are occupied
 long mqttconnectlasttry;
-int mqtt_chip_key = ESP.getChipId(); // chip id for distinguishing multiple devices in a network
-char mqtt_clientid[25];              // client id name
+char deviceName[25]; // device name, also name the device will use to register at the mqtt server
 
 // system update global variables
 unsigned long lastToggledSys = 0;

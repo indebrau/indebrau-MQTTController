@@ -8,11 +8,7 @@ void setup()
   pins_used[PT_PINS[1]] = true;
   pins_used[PT_PINS[2]] = true;
   
-  // declare display pins as used (if applicable)
-  if(USE_DISPLAY){
-    pins_used[D1] = true;
-    pins_used[D2] = true;
-  }
+
   
   // Start sensors
   DS18B20.begin();
@@ -25,31 +21,31 @@ void setup()
   }
 
   // Set device name
-  snprintf(mqtt_clientid, 25, "MQTTDevice-%08X", mqtt_chip_key);
+  snprintf(deviceName, 25, "MQTTDevice-%08X", ESP_CHIP_ID);
+  
+  // WiFi Manager
+  ESP.wdtFeed();
+  WiFi.hostname(deviceName);
+  wifiManager.setTimeout(20);
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+
+  if(!wifiManager.autoConnect(deviceName)) {
+    Serial.println("Connection not possible, timeout, restart!");
+    rebootDevice();
+  }
+
+  // activate ArduinoOTA
+  ESP.wdtFeed();
+  setupOTA();
 
   // Load settings
   ESP.wdtFeed();
   loadConfig();
-
-  // WiFi Manager
-  ESP.wdtFeed();
-  WiFi.hostname(mqtt_clientid);
-  wifiManager.setTimeout(20);
-  WiFiManagerParameter cstm_mqtthost("host", "MQTT server address", mqtthost, 16);
-  wifiManager.setSaveConfigCallback(saveConfigCallback);
-  wifiManager.addParameter(&cstm_mqtthost);
-  if(!wifiManager.autoConnect(mqtt_clientid)) {
-    Serial.println("Connection not possible, timeout, restart!");
-    rebootDevice();
-  } 
-  strcpy(mqtthost, cstm_mqtthost.getValue());
-
-  // save changes
-  ESP.wdtFeed();
-  saveConfig();
-
-  // activate ArduinoOTA
-  setupOTA();
+  // declare display pins as used (if applicable)
+  if(use_display){
+    pins_used[D1] = true;
+    pins_used[D2] = true;
+  }
 
   // start mqtt
   client.setServer(mqtthost, MQTT_SERVER_PORT);
@@ -60,7 +56,7 @@ void setup()
   setupServer();
 
   // start display if applicable
-  if(USE_DISPLAY) {
+  if(use_display) {
     Wire.begin(D2, D1);
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
     Serial.println(F("SSD1306 allocation failed"));
@@ -101,9 +97,13 @@ void setupServer()
   server.on("/delSensor", handleDelSensor);
   server.on("/delActor", handleDelActor);
 
+  server.on("/getSysConfig", getSysConfig); // returns use_display and mqtthost as json
+  server.on("/setSysConfig", setSysConfig); // saves use_display and mqtthost to config file
+
   server.on("/reboot", rebootDevice); // reboots the device
   server.on("/version", getVersion); // returns the (hardcoded) firmware version of this device
   server.on("/mqttStatus", getMqttStatus); // returns the current MQTT connection status
+  server.on("/getUseDisplay", getUseDisplay); // returns, if the display has been configured
 
   server.onNotFound(handleWebRequests); // fallback
 
