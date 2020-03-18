@@ -96,7 +96,7 @@
       <div class="row">
         <div class="col">
           <div>
-            Firmware Web Frontend: v1.0.1 (15.03.2020)
+            Firmware Web Frontend: v1.0.1-SNAPSHOT (18.03.2020)
           </div>
           <div>
             <div id="version" />
@@ -182,6 +182,10 @@
             <div class="form-group">
               <label for="modal_sensor_topic">MQTT Topic</label>
               <input type="text" class="form-control" placeholder="" id="modal_sensor_topic">
+            </div>
+            <div class="form-group">
+              <label for="modal_sensor_offset">Sensor Offset</label>
+              <input type="number" step="0.01" class="form-control" placeholder="0" id="modal_sensor_offset">
             </div>
           </form>
         </div>
@@ -450,6 +454,7 @@
               var modal = $(this);
               modal.find('#modal_sensor_name').val(data.name);
               modal.find('#modal_sensor_topic').val(data.topic);
+              modal.find('#modal_sensor_offset').val(data.offset);
             }
           });
         }
@@ -472,6 +477,7 @@
               var modal = $(this);
               modal.find('#modal_sensor_name').val(data.name);
               modal.find('#modal_sensor_topic').val(data.topic);
+              modal.find('#modal_sensor_offset').val(data.offset);
               modal.find('#modal_sensor_cs_pin').val(data.csPin);
               modal.find('#modal_sensor_number_of_wires').val(data.numberOfWires);
             }
@@ -485,12 +491,13 @@
       var modal = $('#sensor_modal');
       var sensorName = modal.find('#modal_sensor_name').val();
       var sensorTopic = modal.find('#modal_sensor_topic').val();
+      var sensorOffset = modal.find('#modal_sensor_offset').val();
       var sensorId = modal.attr('sensor_id');
       var sensorType = modal.attr('sensor_type');
       if (sensorType == "OneWire") {
         var sensorAddress = modal.find('#modal_sensor_address').val();
         $.ajax({
-          url: '/setSensor?id=' + sensorId + '&type=' + sensorType + '&name=' + sensorName + '&topic=' + sensorTopic + '&address=' + sensorAddress,
+          url: '/setSensor?id=' + sensorId + '&type=' + sensorType + '&name=' + sensorName + '&topic=' + sensorTopic + '&address=' + sensorAddress + '&sensorOffset=' + sensorOffset,
           type: 'POST',
           async: false,
           cache: false
@@ -500,7 +507,7 @@
         var csPin = modal.find('#modal_sensor_cs_pin').val();
         var numberOfWires = modal.find('#modal_sensor_number_of_wires').val();
         $.ajax({
-          url: '/setSensor?id=' + sensorId + '&type=' + sensorType + '&name=' + sensorName + '&topic=' + sensorTopic + '&cspin=' + csPin + '&numberOfWires=' + numberOfWires,
+          url: '/setSensor?id=' + sensorId + '&type=' + sensorType + '&name=' + sensorName + '&topic=' + sensorTopic + '&cspin=' + csPin + '&numberOfWires=' + numberOfWires + '&sensorOffset=' + sensorOffset,
           type: 'POST',
           async: false,
           cache: false

@@ -3,7 +3,7 @@ bool loadConfig()
   File configFile = SPIFFS.open("/config.json", "r");
   if (!configFile)
   {
-    Serial.println("Failed to open config file (does it exist?");
+    Serial.println("Failed to open config file (does it exist?)");
     return false;
   }
   else
@@ -72,11 +72,13 @@ bool loadConfig()
       String address = jsonsensor["ADDRESS"];
       String topic = jsonsensor["TOPIC"];
       String name = jsonsensor["NAME"];
-      oneWireSensors[i].change(address, topic, name);
+      float offset = jsonsensor["OFFSET"];
+
+      oneWireSensors[i].change(address, topic, name, offset);
     }
     else
     {
-      oneWireSensors[i].change("", "", "");
+      oneWireSensors[i].change("", "", "", 0);
     }
   }
 
@@ -99,11 +101,13 @@ bool loadConfig()
       byte numberOfWires = jsonPTSensor["WIRES"];
       String topic = jsonPTSensor["TOPIC"];
       String name = jsonPTSensor["NAME"];
-      ptSensors[i].change(csPin, numberOfWires, topic, name);
+      float offset = jsonPTSensor["OFFSET"];
+
+      ptSensors[i].change(csPin, numberOfWires, topic, name, offset);
     }
     else
     {
-      ptSensors[i].change("", 0, "", "");
+      ptSensors[i].change("", 0, "", "", 0);
     }
   }
 
@@ -166,6 +170,8 @@ bool saveConfig()
     jsonOneWireSensor["ADDRESS"] = oneWireSensors[i].getSens_address_string();
     jsonOneWireSensor["NAME"] = oneWireSensors[i].sens_name;
     jsonOneWireSensor["TOPIC"] = oneWireSensors[i].sens_mqtttopic;
+    jsonOneWireSensor["OFFSET"] = oneWireSensors[i].sens_offset;
+
   }
 
   // Write PT100/1000 sensors
@@ -177,6 +183,7 @@ bool saveConfig()
     jsonPTSensor["WIRES"] = ptSensors[i].numberOfWires;
     jsonPTSensor["NAME"] = ptSensors[i].name;
     jsonPTSensor["TOPIC"] = ptSensors[i].mqttTopic;
+    jsonPTSensor["OFSSET"] = ptSensors[i].offset;
   }
 
   // Write Induction

@@ -23,14 +23,16 @@
 
 #include <Adafruit_MAX31865.h> // PT100/1000
 
-#include <ESP8266WiFi.h>      // Generelle WiFi Funktionalität
-#include <ESP8266WebServer.h> // Unterstützung Webserver
-#include <WiFiManager.h>      // WiFiManager zur Einrichtung
-#include <DNSServer.h>        // Benötigt für WiFiManager
-#include <PubSubClient.h>     // MQTT Kommunikation
+#include <ESP8266WiFi.h> // General WiFi functionality
+#include <ESP8266WebServer.h> // Webserver support
+#include <WiFiManager.h> // For configuring in access point mode
+#include <DNSServer.h> // Needed for wifimanager
+#include <PubSubClient.h> // MQTT
+#include <EEPROM.h> // Stores the config file
 
-#include <FS.h>          // SPIFFS Zugriff
-#include <ArduinoJson.h> // Lesen und Schreiben von JSON Dateien
+
+#include <FS.h>          // SPIFFS access
+#include <ArduinoJson.h> // json support
 
 #include <ESP8266mDNS.h> // OTA
 #include <WiFiUdp.h>     // OTA
@@ -38,7 +40,7 @@
 
 /*########## CONSTANTS #########*/
 
-const String DEVICE_VERSION = "v1.0.1 (15.03.2020)";
+const String DEVICE_VERSION = "v1.0.1-SNAPSHOT (15.03.2020)";
 const int ESP_CHIP_ID = ESP.getChipId(); // chip id for distinguishing multiple devices in a network
 
 // PINS
