@@ -168,9 +168,9 @@ bool saveConfig()
   {
     JsonObject &jsonOneWireSensor = jsonOneWireSensors.createNestedObject();
     jsonOneWireSensor["ADDRESS"] = oneWireSensors[i].getSens_address_string();
-    jsonOneWireSensor["NAME"] = oneWireSensors[i].sens_name;
-    jsonOneWireSensor["TOPIC"] = oneWireSensors[i].sens_mqtttopic;
-    jsonOneWireSensor["OFFSET"] = oneWireSensors[i].sens_offset;
+    jsonOneWireSensor["NAME"] = oneWireSensors[i].name;
+    jsonOneWireSensor["TOPIC"] = oneWireSensors[i].mqtttopic;
+    jsonOneWireSensor["OFFSET"] = oneWireSensors[i].offset;
 
   }
 
@@ -183,7 +183,7 @@ bool saveConfig()
     jsonPTSensor["WIRES"] = ptSensors[i].numberOfWires;
     jsonPTSensor["NAME"] = ptSensors[i].name;
     jsonPTSensor["TOPIC"] = ptSensors[i].mqttTopic;
-    jsonPTSensor["OFSSET"] = ptSensors[i].offset;
+    jsonPTSensor["OFFSET"] = ptSensors[i].offset;
   }
 
   // Write Induction

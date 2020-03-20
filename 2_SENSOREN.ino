@@ -5,18 +5,18 @@
 class OneWireSensor
 {
   private:
-    unsigned long lastCalled; // Wann wurde der Sensor zuletzt aktualisiert
+    unsigned long lastCalled;
 
   public:
-    char sens_mqtttopic[50]; // Für MQTT Kommunikation
-    byte sens_address[8];    // 1-Wire Adresse
-    String sens_name;        // Name für Anzeige auf Website
-    float sens_value;        // Aktueller Wert
-    float sens_offset;
+    char mqtttopic[50];
+    byte address[8]; // one wire address
+    String name; // just a name that is displayed (in frontend)
+    float value; // value to be send
+    float offset;
 
     String getSens_address_string()
     {
-      return OneWireAddressToString(sens_address);
+      return OneWireAddressToString(address);
     }
 
     OneWireSensor(String address, String mqtttopic, String name, float offset)
@@ -30,26 +30,26 @@ class OneWireSensor
       {
 
         DS18B20.requestTemperatures();
-        sens_value = DS18B20.getTempC(sens_address);
+        value = DS18B20.getTempC(address);
 
-        if (sens_value == -127.0)
+        if (value == -127.0)
         {
           Serial.print("OneWire Sensor ");
-          Serial.print(sens_name);
+          Serial.print(name);
           Serial.println(" not found!");
         }
         else
         {
-          if (sens_value == 85.0)
+          if (value == 85.0)
           {
             Serial.print("One Wire Sensor ");
-            Serial.print(sens_name);
+            Serial.print(name);
             Serial.println(" Error!");
           }
           else
           {
-            sens_value = sens_value + sens_offset; // here, offset is added, just before sending
-            publishmqtt();
+            value = value + offset; // after error checking, add offset
+            publishmqtt(); // and send
           }
         }
 
@@ -59,9 +59,9 @@ class OneWireSensor
 
     void change(String new_address, String new_mqtttopic, String new_name, float new_offset)
     {
-      new_mqtttopic.toCharArray(sens_mqtttopic, new_mqtttopic.length() + 1);
-      sens_name = new_name;
-      sens_offset = new_offset;
+      new_mqtttopic.toCharArray(mqtttopic, new_mqtttopic.length() + 1);
+      name = new_name;
+      offset = new_offset;
       // if this check fails, this could also mean a call from array init
       // (no actual sensor defined for this array entry, so skip init here)
       if (new_address.length() == 16)
@@ -86,11 +86,11 @@ class OneWireSensor
         Serial.print("Starting OneWire sensor: ");
         for (int i = 0; i < 8; i++)
         {
-          sens_address[i] = octets[i];
-          Serial.print(sens_address[i], HEX);
+          address[i] = octets[i];
+          Serial.print(address[i], HEX);
         }
         Serial.println("");
-        DS18B20.setResolution(sens_address, ONE_WIRE_RESOLUTION);
+        DS18B20.setResolution(address, ONE_WIRE_RESOLUTION);
       }
     }
 
@@ -98,14 +98,14 @@ class OneWireSensor
     {
       if (client.connected())
       {
-        client.publish(sens_mqtttopic, getValueString());
+        client.publish(mqtttopic, getValueString());
       }
     }
 
     char *getValueString()
     {
       char buf[8];
-      dtostrf(sens_value, 3, 2, buf);
+      dtostrf(value, 3, 2, buf);
       return buf;
     }
 };
@@ -120,10 +120,10 @@ class PTSensor
   public:
     byte csPin = DEFAULT_CS_PIN; // set to default, otherwise would be "D3" (-> Arduino 0)
     byte numberOfWires;
-    char mqttTopic[50]; // topic for mqtt sending
-    String name;        // frontend name
+    char mqttTopic[50];
+    String name; // just a name that is displayed (in frontend)
+    float value; // value to be send
     float offset;
-    float value;        // current value
 
     PTSensor(String csPin, byte numberOfWires, String mqtttopic, String name, float offset)
     {
@@ -144,8 +144,8 @@ class PTSensor
         }
         else
         {
-          value = value + offset; // here, offset is added, just before sending
-          publishmqtt();
+          value = value + offset; // after error checking, add offset
+          publishmqtt(); // and send
         }
         lastCalled = millis();
       }
@@ -214,23 +214,24 @@ class PTSensor
 /*
   Initializing Sensor Arrays
   please mind: max sensor capacity is interpreted as max for each type
+  TODO: Initialized hardcoded to (max) 6 sensors
 */
 OneWireSensor oneWireSensors[NUMBER_OF_SENSORS_MAX] = {
-  OneWireSensor("", "", "",0),
-  OneWireSensor("", "", "",0),
-  OneWireSensor("", "", "",0),
-  OneWireSensor("", "", "",0),
-  OneWireSensor("", "", "",0),
-  OneWireSensor("", "", "",0)
+  OneWireSensor("","","",0),
+  OneWireSensor("","","",0),
+  OneWireSensor("","","",0),
+  OneWireSensor("","","",0),
+  OneWireSensor("","","",0),
+  OneWireSensor("","","",0)
 };
 
 PTSensor ptSensors[NUMBER_OF_SENSORS_MAX] = {
-  PTSensor("", 0, "", "",0),
-  PTSensor("", 0, "", "",0),
-  PTSensor("", 0, "", "",0),
-  PTSensor("", 0, "", "",0),
-  PTSensor("", 0, "", "",0),
-  PTSensor("", 0, "", "",0)
+  PTSensor("",0,"","",0),
+  PTSensor("",0,"","",0),
+  PTSensor("",0,"", "",0),
+  PTSensor("",0,"","",0),
+  PTSensor("",0,"","",0),
+  PTSensor("",0,"","",0)
 };
 
 /* Called in loop() */
@@ -247,6 +248,7 @@ void handleSensors()
     yield();
   }
 }
+
 /* Search the OneWire bus for available sensor addresses */
 byte searchOneWireSensors()
 {
@@ -339,7 +341,7 @@ void handleDelSensor()
     // effectively overwriting the sensor to be deleted..
     for (int i = id; i < numberOfOneWireSensors; i++)
     {
-      oneWireSensors[i].change(oneWireSensors[i + 1].getSens_address_string(), oneWireSensors[i + 1].sens_mqtttopic, oneWireSensors[i + 1].sens_name, oneWireSensors[i + 1].sens_offset);
+      oneWireSensors[i].change(oneWireSensors[i + 1].getSens_address_string(), oneWireSensors[i + 1].mqtttopic, oneWireSensors[i + 1].name, oneWireSensors[i + 1].offset);
       yield();
     }
     // ..and declare the array's content to one sensor less
@@ -432,7 +434,7 @@ void handleRequestPtSensorPins()
 }
 
 /*
-  Returns a JSON Array with the current sensor data of all sensors.
+  Returns a JSON array with the current sensor data of all sensors.
 */
 void handleRequestSensors()
 {
@@ -443,8 +445,8 @@ void handleRequestSensors()
   {
     JsonObject &sensorResponse = jsonBuffer.createObject();
     ;
-    sensorResponse["name"] = oneWireSensors[i].sens_name;
-    if ((oneWireSensors[i].sens_value != -127.0) && (oneWireSensors[i].sens_value != 85.0))
+    sensorResponse["name"] = oneWireSensors[i].name;
+    if ((oneWireSensors[i].value != -127.0) && (oneWireSensors[i].value != 85.0))
     {
       sensorResponse["value"] = oneWireSensors[i].getValueString();
     }
@@ -452,10 +454,10 @@ void handleRequestSensors()
     {
       sensorResponse["value"] = "ERR";
     }
-    sensorResponse["mqtt"] = oneWireSensors[i].sens_mqtttopic;
+    sensorResponse["mqtt"] = oneWireSensors[i].mqtttopic;
     sensorResponse["type"] = SENSOR_TYPE_ONE_WIRE;
     sensorResponse["id"] = i;
-    sensorResponse["offset"] = oneWireSensors[i].sens_offset;
+    sensorResponse["offset"] = oneWireSensors[i].offset;
     sensorsResponse.add(sensorResponse);
     yield();
   }
@@ -505,9 +507,9 @@ void handleRequestSensorConfig()
     {
       StaticJsonBuffer<256> jsonBuffer;
       JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["name"] = oneWireSensors[id].sens_name;
-      sensorJson["topic"] = oneWireSensors[id].sens_mqtttopic;
-      sensorJson["offset"] = oneWireSensors[id].sens_offset;
+      sensorJson["name"] = oneWireSensors[id].name;
+      sensorJson["topic"] = oneWireSensors[id].mqtttopic;
+      sensorJson["offset"] = oneWireSensors[id].offset;
       sensorJson.printTo(response);
       server.send(200, "application/json", response);
       return;

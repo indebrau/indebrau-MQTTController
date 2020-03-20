@@ -40,7 +40,7 @@
 
 /*########## CONSTANTS #########*/
 
-const String DEVICE_VERSION = "v1.0.1-SNAPSHOT (15.03.2020)";
+const String DEVICE_VERSION = "v1.0.1-SNAPSHOT (20.03.2020)";
 const int ESP_CHIP_ID = ESP.getChipId(); // chip id for distinguishing multiple devices in a network
 
 // PINS

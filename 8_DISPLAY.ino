@@ -10,7 +10,7 @@ void drawDisplayContent(void) {
       dtostrf(ptSensors[0].value, 2, 2, buf);
     }
     else if(numberOfOneWireSensors > 0){
-      dtostrf(oneWireSensors[0].sens_value, 2, 2, buf);
+      dtostrf(oneWireSensors[0].value, 2, 2, buf);
     }
     else{
       buf[0] = 0; 
