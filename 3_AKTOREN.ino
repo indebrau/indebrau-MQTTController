@@ -53,11 +53,11 @@ class Actor
         pins_used[pin_actor] = false;
         delay(5);
       }
-      // if actor overlapped with display (display was activated after sensor was configured),
+      // if actor overlapped with display (display was activated after actor was configured),
       // this prevents marking a display pin as free (not very nice, but works)
       if(use_display){
-        pins_used[D1] = true;
-        pins_used[D2] = true;
+        pins_used[firstDisplayPin] = true;
+        pins_used[secondDisplayPin] = true;
       }
       
       // set new pin to high
@@ -329,43 +329,4 @@ void handleRequestPins()
     yield();
   }
   server.send(200, "text/plain", message);
-}
-
-byte StringToPin(String pinstring)
-{
-  for (int i = 0; i < NUMBER_OF_PINS; i++)
-  {
-    if (PIN_NAMES[i] == pinstring)
-    {
-      return PINS[i];
-    }
-  }
-  return 9;
-}
-
-String PinToString(byte pinbyte)
-{
-  for (int i = 0; i < NUMBER_OF_PINS; i++)
-  {
-    if (PINS[i] == pinbyte)
-    {
-      return PIN_NAMES[i];
-    }
-  }
-  return "NaN";
-}
-
-bool isPin(byte pinbyte)
-{
-  bool returnValue = false;
-  for (int i = 0; i < NUMBER_OF_PINS; i++)
-  {
-    if (PINS[i] == pinbyte)
-    {
-      returnValue = true;
-      goto Ende;
-    }
-  }
-Ende:
-  return returnValue;
 }

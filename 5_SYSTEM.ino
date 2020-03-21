@@ -1,7 +1,6 @@
 void rebootDevice() {
   server.send(200, "text/plain", "Rebooting in 1 second...");
   delay(1000);
-  // CAUTION: known (library) issue: only works if you (hardware) button-reset once after flashing a new firmware to the device
   ESP.restart();
 }
 
@@ -13,7 +12,7 @@ void getMqttStatus() {
   String returnMessage;
   String mqttAddress(mqtthost);
   if(client.connected()){
-     returnMessage = "Successfully subscribed to MQTT Server at " + mqttAddress;
+     returnMessage = "Device successfully subscribed to MQTT Server at " + mqttAddress + ".";
   }
   else{
     // not configured
@@ -30,7 +29,11 @@ void getMqttStatus() {
 void getUseDisplay() {
   String returnMessage;
   if(use_display) {
-  returnMessage = "Configured to use a display on pin D1 and D2, showing the first sensor readings.";
+    returnMessage = "Configured to use a display on pin ";
+    returnMessage += PinToString(firstDisplayPin);
+    returnMessage += " and pin ";
+    returnMessage += PinToString(secondDisplayPin);
+    returnMessage += ", showing the first sensor readings.";
   }
   else {
     returnMessage = "Not using a display.";

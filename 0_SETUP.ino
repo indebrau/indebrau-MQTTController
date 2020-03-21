@@ -26,10 +26,10 @@ void setup()
   // WiFi Manager
   ESP.wdtFeed();
   WiFi.hostname(deviceName);
-  wifiManager.setTimeout(20);
+  wifiManager.setTimeout(ACCESS_POINT_MODE_TIMEOUT);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-  if(!wifiManager.autoConnect(deviceName)) {
+  if(!wifiManager.autoConnect(deviceName, AP_PASSPHRASE)) {
     Serial.println("Connection not possible, timeout, restart!");
     rebootDevice();
   }
@@ -41,11 +41,6 @@ void setup()
   // Load settings
   ESP.wdtFeed();
   loadConfig();
-  // declare display pins as used (if applicable)
-  if(use_display){
-    pins_used[D1] = true;
-    pins_used[D2] = true;
-  }
 
   // start mqtt
   client.setServer(mqtthost, MQTT_SERVER_PORT);
@@ -57,7 +52,9 @@ void setup()
 
   // start display if applicable
   if(use_display) {
-    Wire.begin(D2, D1);
+    pins_used[firstDisplayPin] = true;
+    pins_used[secondDisplayPin] = true;
+    Wire.begin(secondDisplayPin, firstDisplayPin);
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
     Serial.println(F("SSD1306 allocation failed"));
     }

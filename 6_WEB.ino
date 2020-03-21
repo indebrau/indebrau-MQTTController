@@ -89,7 +89,7 @@ void mqttreconnect()
         Serial.print(i + 1);
         if (client.connect(deviceName))
         {
-          Serial.print("..Successful. Subscribing.");
+          Serial.println("..Successful. Subscribing.");
           goto Subscribe;
         }
         delay(5);

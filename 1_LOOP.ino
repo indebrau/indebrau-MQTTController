@@ -1,44 +1,39 @@
 void loop()
 {
 
-  // Webserver prüfen
+  // Handle webserver and OTA first
   server.handleClient();
-
-  // Sys Update
-  if (millis() > lastToggledSys + SYS_UPDATE)
+  ArduinoOTA.handle();
+  
+  // Now check if system update is needed
+  if (millis() > lastToggled + UPDATE)
   {
-    // WiFi Status prüfen, ggf. Reconnecten
+    // Check wifi status
     if (WiFi.status() != WL_CONNECTED)
     {
       drawDisplayContentError();
+      /* If the wifimanager runs into a timeout (20 seconds), restart device  
+       * Prevents being stuck in Access Point mode when Wifi signal was
+       * temporarily lost. 
+       */
       if(!wifiManager.autoConnect(deviceName)) {
         Serial.println("Connection not possible, timeout, restart!");
         rebootDevice();
       } 
     }
 
-    // OTA
-    ArduinoOTA.handle();
-
-    // MQTT Status prüfen
+    // Check mqtt status
     if (!client.connected())
     {
       mqttreconnect();
     }
 
-    drawDisplayContent();
-    client.loop();
-    lastToggledSys = millis();
-  }
-
-  if (millis() > lastToggled + UPDATE)
-  {
-    // Sensoren aktualisieren
     handleSensors();
-    // Aktoren aktualisieren
     handleActors();
-    // Induktionskochfeld
     handleInduction();
+    drawDisplayContent();
+
+    client.loop();
     lastToggled = millis();
   }
 }
