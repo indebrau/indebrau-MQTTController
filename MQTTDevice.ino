@@ -26,7 +26,7 @@
 #include <ESP8266WiFi.h> // General WiFi functionality
 #include <ESP8266WebServer.h> // Webserver support
 #include <WiFiManager.h> // For configuring in access point mode
-#include <DNSServer.h> // Needed for wifimanager
+#include <DNSServer.h> // Needed for WiFiManager
 #include <PubSubClient.h> // MQTT
 #include <EEPROM.h> // Stores the config file
 
