@@ -1,6 +1,6 @@
 # Indebrau MQTTDevice
 
-![Overview Image](/img/overview.png)
+![Overview Image](/img/screenshot.png)
 
 ## Introduction
 The Indebrau MQTTDevice is an Arduino sketch based on the ESP8266 to enable stable wireless communication between [CraftBeerPi V3](https://github.com/Manuel83/craftbeerpi3) and actors and sensors, based on the MQTT protocol.
