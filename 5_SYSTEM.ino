@@ -43,10 +43,42 @@ void getUseDisplay() {
 
 void getSysConfig() {
   String mqttAddress(mqtthost);
-  StaticJsonBuffer<256> jsonBuffer;
+  StaticJsonBuffer<1024> jsonBuffer;
   JsonObject &config = jsonBuffer.createObject();
   config["mqttAddress"] = mqttAddress;
   config["useDisplay"] = use_display;
+  
+  // get list of free pins
+  String freePins = "";
+  for (int i = 0; i < NUMBER_OF_PINS; i++) {
+    if (pins_used[PINS[i]] == false) {
+      freePins += F("<option>");
+      freePins += PIN_NAMES[i];
+      freePins += F("</option>");
+    }
+    yield();
+  }
+  // first pin message
+  String firstPinMessage = "";
+  if (use_display) {
+    firstPinMessage += F("<option>");
+    firstPinMessage += PinToString(firstDisplayPin);
+    firstPinMessage += F("</option><option disabled>──────────</option>");
+  }
+  firstPinMessage += freePins;
+  // second pin message
+  String secondPinMessage = "";
+  if (use_display) {
+    secondPinMessage += F("<option>");
+    secondPinMessage += PinToString(secondDisplayPin);
+    secondPinMessage += F("</option><option disabled>──────────</option>");
+  }
+  secondPinMessage += freePins;
+
+  // now add both to json
+  config["firstDisplayPin"] = firstPinMessage;
+  config["secondDisplayPin"] = secondPinMessage;
+  
   String response;
   config.printTo(response);
   server.send(200, "application/json", response);
@@ -56,9 +88,11 @@ void setSysConfig() {
   String string_mqtthost = server.arg(0);
   string_mqtthost.toCharArray(mqtthost, 16);
   String string_use_display = server.arg(1);
-  if(string_use_display == "true")
+  if(string_use_display == "true"){
     use_display = true;
-  else{
+    firstDisplayPin = StringToPin(server.arg(2));
+    secondDisplayPin = StringToPin(server.arg(3));
+  } else{
     use_display = false;
   }
   saveConfig();

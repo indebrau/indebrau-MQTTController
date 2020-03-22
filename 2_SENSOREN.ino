@@ -505,7 +505,7 @@ void handleRequestSensorConfig()
     }
     else
     {
-      StaticJsonBuffer<256> jsonBuffer;
+      StaticJsonBuffer<1024> jsonBuffer;
       JsonObject &sensorJson = jsonBuffer.createObject();
       sensorJson["name"] = oneWireSensors[id].name;
       sensorJson["topic"] = oneWireSensors[id].mqtttopic;
@@ -525,7 +525,7 @@ void handleRequestSensorConfig()
     }
     else
     {
-      StaticJsonBuffer<256> jsonBuffer;
+      StaticJsonBuffer<1024> jsonBuffer;
       JsonObject &sensorJson = jsonBuffer.createObject();
       sensorJson["name"] = ptSensors[id].name;
       sensorJson["topic"] = ptSensors[id].mqttTopic;

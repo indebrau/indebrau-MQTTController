@@ -97,7 +97,6 @@ void setupServer()
   server.on("/getSysConfig", getSysConfig); // returns use_display and mqtthost as json
   server.on("/setSysConfig", setSysConfig); // saves use_display and mqtthost to config file
 
-  server.on("/reboot", rebootDevice); // reboots the device
   server.on("/version", getVersion); // returns the (hardcoded) firmware version of this device
   server.on("/mqttStatus", getMqttStatus); // returns the current MQTT connection status
   server.on("/getUseDisplay", getUseDisplay); // returns, if the display has been configured

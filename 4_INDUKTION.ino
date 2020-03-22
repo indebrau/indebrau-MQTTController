@@ -57,8 +57,6 @@ class induction
 
         if (isPin(PIN_INTERRUPT))
         {
-          //detachInterrupt(PIN_INTERRUPT);
-          //pinMode(PIN_INTERRUPT, OUTPUT);
           digitalWrite(PIN_INTERRUPT, HIGH);
           pins_used[PIN_INTERRUPT] = false;
         }
@@ -354,9 +352,6 @@ setPowerLevel: /* Wie lange "HIGH" oder "LOW" */
             else
             { // Aufnahme vorbei.
 
-              /* Auswerten */
-              //newError = BtoI(13,4);          // Fehlercode auslesen.
-
               /* von Vorne */
               //timeLastReaction = millis();
               inputCurrent = 0;
@@ -365,17 +360,6 @@ setPowerLevel: /* Wie lange "HIGH" oder "LOW" */
           }
         }
       }
-    }
-
-    unsigned long BtoI(int start, int numofbits)
-    { //binary array to integer conversion
-      unsigned long integer = 0;
-      //   unsigned long mask=1;
-      //   for (int i = numofbits+start-1; i >= start; i--) {
-      //     if (inputBuffer[i]) integer |= mask;
-      //     mask = mask << 1;
-      //   }
-      return integer;
     }
 }
 

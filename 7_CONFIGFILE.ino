@@ -18,7 +18,7 @@ bool loadConfig()
 
   configFile.readBytes(buf.get(), size);
 
-  StaticJsonBuffer<1024> jsonBuffer;
+  StaticJsonBuffer<2048> jsonBuffer;
   JsonObject &json = jsonBuffer.parseObject(buf.get());
 
   if (!json.success()) {
@@ -119,18 +119,15 @@ bool loadConfig()
     secondDisplayPin = StringToPin(jsonDisplay["SECONDDISPLAYPIN"]);
   }
 
-  // General settings
+  // Read MQTT host
   String json_mqtthost = json["MQTTHOST"];
   json_mqtthost.toCharArray(mqtthost, 16);
-  
-
   return true;
 }
 
 bool saveConfig()
 {
-
-  StaticJsonBuffer<1024> jsonBuffer;
+  StaticJsonBuffer<2048> jsonBuffer;
   JsonObject &json = jsonBuffer.createObject();
 
   File configFile = SPIFFS.open("/config.json", "w");

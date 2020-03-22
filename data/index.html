@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8">
-  <title>MQTT Device</title>
+  <title>Indebrau MQTT Device</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="font-awesome.min.css" type="text/css">
   <link rel="stylesheet" href="theme.css" type="text/css">
@@ -16,13 +16,10 @@
     <div class="container">
       <div class="row">
         <div class="col">
-          <h1 class="text-center">MQTT Device</h1>
-        </div>
-        <div class="col-md-auto">
-          <a href="" class="btn btn-outline-primary" data-target="#config_modal" data-toggle="modal">Configure Device</a>
+          <h1 class="text-center">Indebrau MQTT Device</h1>
+          <button type="button"  class="btn btn-outline-primary" data-target="#config_modal" data-toggle="modal">Configure Device</button>
           <a href="config.json" download="config.json" class="btn btn-outline-primary" id="btn_downloadConfig">Download
             Config</a>
-          <button type="button" class="btn btn-outline-danger" id="btn_reboot">Reboot</button>
         </div>
       </div>
     </div>
@@ -96,7 +93,7 @@
       <div class="row">
         <div class="col">
           <div>
-            Firmware Web Frontend: v1.0.1-SNAPSHOT (18.03.2020)
+            Firmware Web Frontend: v1.0.2 (22.03.2020)
           </div>
           <div>
             <div id="version" />
@@ -122,7 +119,7 @@
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label for="modal_actor_name">Name </label>
+            <label for="modal_actor_name">Name</label>
             <input type="text" class="form-control" placeholder="" id="modal_actor_name">
           </div>
           <div class="form-group">
@@ -252,6 +249,16 @@
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="modal_use_display">
             <label for="modal_use_display">Use Display</label>
+          </div>
+          <div class="form-group">
+            <label for="modal_display_first_pin">Display Pin 1</label>
+            <select class="form-control" id="modal_display_first_pin">
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modal_display_second_pin">Display Pin 2</label>
+            <select class="form-control" id="modal_display_second_pin">
+            </select>
           </div>
         </div>
         <div class="modal-footer">
@@ -615,7 +622,6 @@
 
     /* click on "Configure Device" button */
     $('#config_modal').on('show.bs.modal', function () {
-
       var modal = $(this);
       $.ajax({
         url: '/getSysConfig',
@@ -627,6 +633,8 @@
           modal.find('#modal_mqtt_address').val(data.mqttAddress);
           if (data.useDisplay) { modal.find('#modal_use_display').prop("checked", true); }
           else { modal.find('#modal_use_display').prop("checked", false); }
+          modal.find('#modal_display_first_pin').html(data.firstDisplayPin);
+          modal.find('#modal_display_second_pin').html(data.secondDisplayPin);
         }
       });
     });
@@ -636,6 +644,8 @@
       var modal = $('#config_modal');
 
       var mqttAddress = modal.find('#modal_mqtt_address').val();
+      var firstDisplayPin = modal.find('#modal_display_first_pin').val();
+      var secondDisplayPin = modal.find('#modal_display_second_pin').val();
 
       if (modal.find('#modal_use_display').prop("checked") == true) {
         var useDisplay = true;
@@ -644,26 +654,13 @@
       }
 
       $.ajax({
-        url: '/setSysConfig?mqttAddress=' + mqttAddress + '&useDisplay=' + useDisplay,
+        url: '/setSysConfig?mqttAddress=' + mqttAddress + '&useDisplay=' + useDisplay
+              + '&firstDisplayPin=' + firstDisplayPin + '&secondDisplayPin=' + secondDisplayPin,
         type: 'POST',
         async: false,
         cache: false
       }).done(function (msg) {
         modal.modal('hide')
-        alert(msg + "\n Page will be reloaded now!");
-        window.location.reload(true);
-      });;
-    });
-
-
-    /* click on reboot button */
-    $("#btn_reboot").click(function () {
-      $.ajax({
-        url: '/reboot',
-        type: 'POST',
-        async: false,
-        cache: false
-      }).done(function (msg) {
         alert(msg + "\n Page will be reloaded now!");
         window.location.reload(true);
       });;
