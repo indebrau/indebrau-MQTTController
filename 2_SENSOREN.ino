@@ -290,6 +290,10 @@ void handleSetSensor()
     {
       id = numberOfOneWireSensors;
       numberOfOneWireSensors += 1;
+      // first sensor, block OneWire sensor pins
+      if(numberOfOneWireSensors == 1){
+        pins_used[ONE_WIRE_BUS] = true;
+      }
     }
     String newName = server.arg(2);
     String newTopic = server.arg(3);
