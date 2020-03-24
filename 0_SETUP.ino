@@ -1,28 +1,31 @@
 void setup()
 {
   Serial.begin(115200);
+  snprintf(deviceName, 25, "MQTTDevice-%08X", ESP_CHIP_ID); // Set device name
 
-  // declare OneWire and PT Pins as used
-  pins_used[ONE_WIRE_BUS] = true;
-  pins_used[PT_PINS[0]] = true;
-  pins_used[PT_PINS[1]] = true;
-  pins_used[PT_PINS[2]] = true;
+  // Load spif file system
+  ESP.wdtFeed();
+  if (!SPIFFS.begin()) {
+    Serial.println("SPIFFS Mount failed");
+  }
+
+  // Load settings from config.json
+  ESP.wdtFeed();
+  loadConfig();
   
-
+  // declare OneWire and PT Pins as used
+  if(numberOfOneWireSensors > 0){
+      pins_used[ONE_WIRE_BUS] = true;
+  }
+  if(numberOfPTSensors > 0){
+    pins_used[PT_PINS[0]] = true;
+    pins_used[PT_PINS[1]] = true;
+    pins_used[PT_PINS[2]] = true;
+  }
   
   // Start sensors
   DS18B20.begin();
 
-  // Load spif file system
-  ESP.wdtFeed();
-  if (!SPIFFS.begin())
-  {
-    Serial.println("SPIFFS Mount failed");
-  }
-
-  // Set device name
-  snprintf(deviceName, 25, "MQTTDevice-%08X", ESP_CHIP_ID);
-  
   // WiFi Manager
   ESP.wdtFeed();
   WiFi.hostname(deviceName);
@@ -38,10 +41,6 @@ void setup()
   ESP.wdtFeed();
   setupOTA();
 
-  // Load settings
-  ESP.wdtFeed();
-  loadConfig();
-
   // start mqtt
   client.setServer(mqtthost, MQTT_SERVER_PORT);
   client.setCallback(mqttcallback);
@@ -51,10 +50,10 @@ void setup()
   setupServer();
 
   // start display if applicable
-  if(use_display) {
+  if(useDisplay) {
     pins_used[firstDisplayPin] = true;
     pins_used[secondDisplayPin] = true;
-    Wire.begin(secondDisplayPin, firstDisplayPin);
+    Wire.begin(firstDisplayPin, secondDisplayPin); // SDA and SCL
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
     Serial.println(F("SSD1306 allocation failed"));
     }
@@ -94,12 +93,12 @@ void setupServer()
   server.on("/delSensor", handleDelSensor);
   server.on("/delActor", handleDelActor);
 
-  server.on("/getSysConfig", getSysConfig); // returns use_display and mqtthost as json
-  server.on("/setSysConfig", setSysConfig); // saves use_display and mqtthost to config file
+  server.on("/getSysConfig", getSysConfig); // returns display config and mqtthost as json
+  server.on("/setSysConfig", setSysConfig); // saves display config and mqtthost to config file
 
   server.on("/version", getVersion); // returns the (hardcoded) firmware version of this device
   server.on("/mqttStatus", getMqttStatus); // returns the current MQTT connection status
-  server.on("/getUseDisplay", getUseDisplay); // returns, if the display has been configured
+  server.on("/getOtherPins", getOtherPins); // returns other configuration (used pins)
 
   server.onNotFound(handleWebRequests); // fallback
 

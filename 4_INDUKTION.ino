@@ -60,12 +60,7 @@ class induction
           digitalWrite(PIN_INTERRUPT, HIGH);
           pins_used[PIN_INTERRUPT] = false;
         }
-        // if induction overlapped with display (display was activated after indu was configured),
-        // this prevents marking a display pin as free (not very nice, but works)
-        if(use_display){
-          pins_used[firstDisplayPin] = true;
-          pins_used[secondDisplayPin] = true;
-        }
+        
         mqtt_unsubscribe();
       }
 

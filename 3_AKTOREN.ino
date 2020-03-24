@@ -53,13 +53,6 @@ class Actor
         pins_used[pin_actor] = false;
         delay(5);
       }
-      // if actor overlapped with display (display was activated after actor was configured),
-      // this prevents marking a display pin as free (not very nice, but works)
-      if(use_display){
-        pins_used[firstDisplayPin] = true;
-        pins_used[secondDisplayPin] = true;
-      }
-      
       // set new pin to high
       pin_actor = StringToPin(pin);
       if (isPin(pin_actor))

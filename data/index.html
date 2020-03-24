@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="theme.css" type="text/css">
 </head>
 
-<body onload="setInterval(refresh, 5000)">
+<body onload="setInterval(refresh, 3000)">
 
   <!-- Header -->
   <div class="py-2">
@@ -93,13 +93,13 @@
       <div class="row">
         <div class="col">
           <div>
-            Firmware Web Frontend: v1.0.2 (22.03.2020)
+            Firmware Web Frontend: v1.0.3 (23.03.2020)
           </div>
           <div>
             <div id="version" />
           </div>
           <div>
-            <div id="display" />
+            <div id="otherPins" />
           </div>
           <div>
             <div id="mqttStatus" />
@@ -279,6 +279,9 @@
     function refresh() {
       $.get("/mqttStatus", function (data) {
         $('#mqttStatus').html(data);
+      });
+      $.get("/getOtherPins", function (data) {
+        $('#otherPins').html(data);
       });
       $.get("/reqSensors", function (data) {
         let content = "";
@@ -666,12 +669,9 @@
       });;
     });
 
-    /* after initial loading is done, once get the firmware version and check for display usage */
+    /* after initial loading is done, once get the firmware version */
     $.get("/version", function (data) {
       $('#version').html("Firmware Device: " + data);
-    });
-    $.get("/getUseDisplay", function (data) {
-      $('#display').html(data);
     });
   </script>
 

@@ -113,8 +113,8 @@ bool loadConfig()
 
   //Read display
   JsonObject &jsonDisplay = json["display"];
-  use_display = jsonDisplay["USEDISPLAY"];
-  if(use_display){
+  useDisplay = jsonDisplay["USEDISPLAY"];
+  if(useDisplay){
     firstDisplayPin = StringToPin(jsonDisplay["FIRSTDISPLAYPIN"]);
     secondDisplayPin = StringToPin(jsonDisplay["SECONDDISPLAYPIN"]);
   }
@@ -183,8 +183,8 @@ bool saveConfig()
 
 // Write display usage
   JsonObject &jDisplay = json.createNestedObject("display");
-  jDisplay["USEDISPLAY"] = use_display;
-  if(use_display){
+  jDisplay["USEDISPLAY"] = useDisplay;
+  if(useDisplay){
     jDisplay["FIRSTDISPLAYPIN"] = PinToString(firstDisplayPin);
     jDisplay["SECONDDISPLAYPIN"] = PinToString(secondDisplayPin);
   }

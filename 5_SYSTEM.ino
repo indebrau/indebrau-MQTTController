@@ -26,17 +26,25 @@ void getMqttStatus() {
   server.send(200, "text/plain", returnMessage);
 }
 
-void getUseDisplay() {
+void getOtherPins() {
   String returnMessage;
-  if(use_display) {
-    returnMessage = "Configured to use a display on pin ";
-    returnMessage += PinToString(firstDisplayPin);
-    returnMessage += " and pin ";
-    returnMessage += PinToString(secondDisplayPin);
-    returnMessage += ", showing the first sensor readings.";
+  if(useDisplay) {
+    returnMessage = "Using a display. Pins for SDA and SCL are ";
+    returnMessage += PinToString(firstDisplayPin) + " and " + PinToString(secondDisplayPin);
+    returnMessage += ". Showing the first sensor readings.<br>";
+  } else {
+    returnMessage = "Not using a display.<br>";
   }
-  else {
-    returnMessage = "Not using a display.";
+  if(numberOfPTSensors > 0) {
+    returnMessage += "Using PT sensors. Pins for  DI, DO and CLK are ";
+    returnMessage += PinToString(PT_PINS[0]) + ", " + PinToString(PT_PINS[1]) + ", " + PinToString(PT_PINS[2]) + ". ";
+  } else {
+        returnMessage += "Not using PT sensors. ";
+  }
+  if(numberOfOneWireSensors > 0) {
+    returnMessage += "Using OneWire sensors. OneWire bus is on pin "  + PinToString(ONE_WIRE_BUS) + ".";
+  } else {
+        returnMessage += "Not using OneWire sensors.";
   }
   server.send(200, "text/plain", returnMessage);
 }
@@ -46,7 +54,7 @@ void getSysConfig() {
   StaticJsonBuffer<1024> jsonBuffer;
   JsonObject &config = jsonBuffer.createObject();
   config["mqttAddress"] = mqttAddress;
-  config["useDisplay"] = use_display;
+  config["useDisplay"] = useDisplay;
   
   // get list of free pins
   String freePins = "";
@@ -60,7 +68,7 @@ void getSysConfig() {
   }
   // first pin message
   String firstPinMessage = "";
-  if (use_display) {
+  if (useDisplay) {
     firstPinMessage += F("<option>");
     firstPinMessage += PinToString(firstDisplayPin);
     firstPinMessage += F("</option><option disabled>──────────</option>");
@@ -68,7 +76,7 @@ void getSysConfig() {
   firstPinMessage += freePins;
   // second pin message
   String secondPinMessage = "";
-  if (use_display) {
+  if (useDisplay) {
     secondPinMessage += F("<option>");
     secondPinMessage += PinToString(secondDisplayPin);
     secondPinMessage += F("</option><option disabled>──────────</option>");
@@ -87,13 +95,13 @@ void getSysConfig() {
 void setSysConfig() {
   String string_mqtthost = server.arg(0);
   string_mqtthost.toCharArray(mqtthost, 16);
-  String string_use_display = server.arg(1);
-  if(string_use_display == "true"){
-    use_display = true;
+  String string_useDisplay = server.arg(1);
+  if(string_useDisplay == "true"){
+    useDisplay = true;
     firstDisplayPin = StringToPin(server.arg(2));
     secondDisplayPin = StringToPin(server.arg(3));
   } else{
-    use_display = false;
+    useDisplay = false;
   }
   saveConfig();
   rebootDevice();

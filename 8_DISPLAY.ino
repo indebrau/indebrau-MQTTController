@@ -1,5 +1,5 @@
 void drawDisplayContent(void) {
-  if(use_display) {
+  if(useDisplay) {
     display.clearDisplay();
     display.setTextSize(3);
     display.setTextColor(WHITE);
@@ -35,7 +35,7 @@ void drawDisplayContent(void) {
 }
 
 void drawDisplayContentError(void) {
-  if(use_display) {
+  if(useDisplay) {
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);

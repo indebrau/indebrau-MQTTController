@@ -26,6 +26,7 @@ The main feature difference is the support of the more accurate (yet a little mo
 (to come, check out the different controller repositories for (currently) undocumented 3d-print case- and pcb layouts)
 
 ## Needed libraries (please install)
+* esp8266 (by ESP8266 Community) version 2.6.3 (the board)
 * OneWire (by Jim Studt..) version 2.3.5
 * DallasTemperature (by Miles Burton...) version 3.8.0
 * PubSubClient (by Nick O''Leary) version 2.7.0

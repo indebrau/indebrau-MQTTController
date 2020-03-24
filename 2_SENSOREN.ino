@@ -164,12 +164,6 @@ class PTSensor
           pins_used[csPin] = false;
           csPin = byteNewCSPin;
           pins_used[csPin] = true;
-          // if sensor overlapped with display (display was activated after sensor was configured),
-          // this prevents marking a display pin as free (not very nice, but works)
-          if(use_display){
-            pins_used[firstDisplayPin] = true;
-            pins_used[secondDisplayPin] = true;
-          }
           newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
           numberOfWires = newNumberOfWires;
           name = newName;
@@ -283,7 +277,7 @@ String OneWireAddressToString(byte addr[8])
 
 /* All following fuctions called from frontend (mapping in 0_Setup.ino) */
 
-/* Update sensor attributes or create new sensor */
+/* Update sensor attributes or create new sensor. TODO: some (probably) race conditions get the chip to crash and reboot from time to time (still works though)*/
 void handleSetSensor()
 {
   int id = server.arg(0).toInt();
@@ -310,6 +304,12 @@ void handleSetSensor()
     {
       id = numberOfPTSensors;
       numberOfPTSensors += 1;
+      // first sensor, block PT sensor pins
+      if(numberOfPTSensors == 1){
+        pins_used[PT_PINS[0]] = true;
+        pins_used[PT_PINS[1]] = true;
+        pins_used[PT_PINS[2]] = true;
+      }
     }
     String newName = server.arg(2);
     String newTopic = server.arg(3);
@@ -329,14 +329,13 @@ void handleSetSensor()
   server.send(201, "text/plain", "created");
 }
 
-/* Delete a sensor. TODO: Check, if sensor existed */
+/* Delete a sensor. TODO: some (probably) race conditions get the chip to crash and reboot from time to time (still works though)*/
 void handleDelSensor()
 {
   int id = server.arg(0).toInt();
   String type = server.arg(1);
   // OneWire
-  if (type == SENSOR_TYPE_ONE_WIRE)
-  {
+  if (type == SENSOR_TYPE_ONE_WIRE){
     // move all sensors following the given id one to the front of array,
     // effectively overwriting the sensor to be deleted..
     for (int i = id; i < numberOfOneWireSensors; i++)
@@ -346,17 +345,13 @@ void handleDelSensor()
     }
     // ..and declare the array's content to one sensor less
     numberOfOneWireSensors -= 1;
-  }
-  else if (type == SENSOR_TYPE_PT)
-  {
+    // last sensor removed, free pin usage
+    if(numberOfOneWireSensors == 0){
+      pins_used[ONE_WIRE_BUS] = false;
+    }
+  } else if (type == SENSOR_TYPE_PT) {
     // first declare the pin unused
     pins_used[ptSensors[id].csPin] = false;
-    // if sensor overlapped with display (display was activated after sensor was configured),
-    // this prevents marking a display pin as free (not very nice, but works)
-    if(use_display){
-      pins_used[firstDisplayPin] = true;
-      pins_used[secondDisplayPin] = true;
-    }
     // move all sensors following the given id one to the front of array,
     // effectively overwriting the sensor to be deleted..
     for (int i = id; i < numberOfPTSensors; i++)
@@ -367,6 +362,12 @@ void handleDelSensor()
     }
     // ..and declare the array's content to one sensor less
     numberOfPTSensors -= 1;
+    // last sensor removed, free pin usages
+    if(numberOfPTSensors == 0){
+      pins_used[PT_PINS[0]] = false;
+      pins_used[PT_PINS[1]] = false;
+      pins_used[PT_PINS[2]] = false;
+    }
   }
   // unknown type
   else
