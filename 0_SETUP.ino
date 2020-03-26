@@ -1,7 +1,7 @@
 void setup()
 {
   Serial.begin(115200);
-  snprintf(deviceName, 25, "MQTTDevice-%08X", ESP_CHIP_ID); // Set device name
+  snprintf(deviceName, 25, "MQTTDevice-%08X", ESP.getChipId()); // Set device name
 
   // Load spif file system
   ESP.wdtFeed();

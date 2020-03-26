@@ -1,5 +1,4 @@
-bool loadConfig()
-{
+bool loadConfig() {
   File configFile = SPIFFS.open("/config.json", "r");
   if (!configFile) {
     Serial.println("Failed to open config file! (does it exist?)");
@@ -18,7 +17,7 @@ bool loadConfig()
 
   configFile.readBytes(buf.get(), size);
 
-  StaticJsonBuffer<2048> jsonBuffer;
+  StaticJsonBuffer<1024> jsonBuffer;
   JsonObject &json = jsonBuffer.parseObject(buf.get());
 
   if (!json.success()) {
@@ -125,9 +124,8 @@ bool loadConfig()
   return true;
 }
 
-bool saveConfig()
-{
-  StaticJsonBuffer<2048> jsonBuffer;
+bool saveConfig() {
+  StaticJsonBuffer<1024> jsonBuffer;
   JsonObject &json = jsonBuffer.createObject();
 
   File configFile = SPIFFS.open("/config.json", "w");

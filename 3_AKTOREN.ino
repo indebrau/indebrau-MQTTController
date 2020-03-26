@@ -232,7 +232,6 @@ void handleRequestActorConfig()
     }
     message = "not found";
   }
-  saveConfig();
 SendMessage:
   server.send(200, "text/plain", message);
 }
@@ -274,7 +273,6 @@ void handleSetActor()
   }
 
   actors[id].change(ac_pin, ac_argument, ac_name, ac_isinverted);
-
   saveConfig();
   server.send(201, "text/plain", "created");
 }

@@ -1,6 +1,5 @@
 void loop()
 {
-
   // Handle webserver and OTA first
   server.handleClient();
   ArduinoOTA.handle();
@@ -35,5 +34,7 @@ void loop()
 
     client.loop();
     lastToggled = millis();
+    yield();
   }
+  yield();
 }

@@ -40,8 +40,7 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.0.3 (23.03.2020)";
-const int ESP_CHIP_ID = ESP.getChipId(); // Chip id for distinguishing multiple devices in a network
+const String DEVICE_VERSION = "v1.0.4 (26.03.2020)";
 
 // Default PINS (for initialization, can be configured via Web frontend, see also 99_PINMAP_WEMOS_D1Mini)
 const byte ONE_WIRE_BUS = D8;
@@ -67,7 +66,7 @@ const int TELNET_SERVER_PORT = 8266;
 const int MQTT_SERVER_PORT = 1883;
 const byte ACCESS_POINT_MODE_TIMEOUT = 20; // In seconds, device restarts if no one connected to AP during this time
 const char AP_PASSPHRASE[16] = "indebrau"; // Passphrase to access the Wifi access point
-const int UPDATE = 1000; // How often should the system update state ("call all routines")
+const int UPDATE = 500; // How often should the system update state ("call all routines")
 const int DEFAULT_SENSOR_UPDATE_INTERVAL = 2000; // how often should sensors provide new readings (>= UPDATE)
 
 // Display

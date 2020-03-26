@@ -277,7 +277,7 @@ String OneWireAddressToString(byte addr[8])
 
 /* All following fuctions called from frontend (mapping in 0_Setup.ino) */
 
-/* Update sensor attributes or create new sensor. TODO: some (probably) race conditions get the chip to crash and reboot from time to time (still works though)*/
+/* Update sensor attributes or create new sensor.*/
 void handleSetSensor()
 {
   int id = server.arg(0).toInt();
@@ -333,7 +333,7 @@ void handleSetSensor()
   server.send(201, "text/plain", "created");
 }
 
-/* Delete a sensor. TODO: some (probably) race conditions get the chip to crash and reboot from time to time (still works though)*/
+/* Delete a sensor.*/
 void handleDelSensor()
 {
   int id = server.arg(0).toInt();
