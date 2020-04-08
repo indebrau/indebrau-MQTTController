@@ -105,8 +105,7 @@ void setupServer()
   server.begin();
 }
 
-void setupOTA()
-{
+void setupOTA(){
   Serial.print("Configuring OTA device...");
   TelnetServer.begin(); // necesary to autodetect OTA device
   ArduinoOTA.onStart([]() {

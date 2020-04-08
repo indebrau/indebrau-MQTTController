@@ -2,8 +2,7 @@
   Sensor classes and related functions.
   Currently supports OneWire and PT100/1000 sensors.
 */
-class OneWireSensor
-{
+class OneWireSensor{
   private:
     unsigned long lastCalled;
 
@@ -14,40 +13,33 @@ class OneWireSensor
     float value; // value to be send
     float offset;
 
-    String getSens_address_string()
-    {
+    String getSens_address_string(){
       return OneWireAddressToString(address);
     }
 
-    OneWireSensor(String address, String mqtttopic, String name, float offset)
-    {
+    OneWireSensor(String address, String mqtttopic, String name, float offset){
       change(address, mqtttopic, name, offset);
     }
 
-    void update()
-    {
+    void update(){
       if (millis() > (lastCalled + DEFAULT_SENSOR_UPDATE_INTERVAL))
       {
 
         DS18B20.requestTemperatures();
         value = DS18B20.getTempC(address);
 
-        if (value == -127.0)
-        {
+        if (value == -127.0){
           Serial.print("OneWire Sensor ");
           Serial.print(name);
           Serial.println(" not found!");
         }
-        else
-        {
-          if (value == 85.0)
-          {
+        else{
+          if (value == 85.0){
             Serial.print("One Wire Sensor ");
             Serial.print(name);
             Serial.println(" Error!");
           }
-          else
-          {
+          else{
             value = value + offset; // after error checking, add offset
             publishmqtt(); // and send
           }
@@ -57,15 +49,13 @@ class OneWireSensor
       }
     }
 
-    void change(String new_address, String new_mqtttopic, String new_name, float new_offset)
-    {
+    void change(String new_address, String new_mqtttopic, String new_name, float new_offset){
       new_mqtttopic.toCharArray(mqtttopic, new_mqtttopic.length() + 1);
       name = new_name;
       offset = new_offset;
       // if this check fails, this could also mean a call from array init
       // (no actual sensor defined for this array entry, so skip init here)
-      if (new_address.length() == 16)
-      {
+      if (new_address.length() == 16){
         char address_char[16];
 
         new_address.toCharArray(address_char, 17);
@@ -73,8 +63,7 @@ class OneWireSensor
         char hexbyte[2];
         int octets[8];
 
-        for (int d = 0; d < 16; d += 2)
-        {
+        for (int d = 0; d < 16; d += 2){
           // Assemble a digit pair into the hexbyte string
           hexbyte[0] = address_char[d];
           hexbyte[1] = address_char[d + 1];
@@ -84,8 +73,7 @@ class OneWireSensor
           yield();
         }
         Serial.print("Starting OneWire sensor: ");
-        for (int i = 0; i < 8; i++)
-        {
+        for (int i = 0; i < 8; i++){
           address[i] = octets[i];
           Serial.print(address[i], HEX);
         }
@@ -94,24 +82,20 @@ class OneWireSensor
       }
     }
 
-    void publishmqtt()
-    {
-      if (client.connected())
-      {
+    void publishmqtt(){
+      if (client.connected()){
         client.publish(mqtttopic, getValueString());
       }
     }
 
-    char *getValueString()
-    {
+    char *getValueString(){
       char buf[8];
       dtostrf(value, 3, 2, buf);
       return buf;
     }
 };
 
-class PTSensor
-{
+class PTSensor{
   private:
     unsigned long lastCalled; // timestamp
     // reference to amplifier board, with initial values (will be overwritten in "constructor")
@@ -125,15 +109,12 @@ class PTSensor
     float value; // value to be send
     float offset;
 
-    PTSensor(String csPin, byte numberOfWires, String mqtttopic, String name, float offset)
-    {
+    PTSensor(String csPin, byte numberOfWires, String mqtttopic, String name, float offset){
       change(csPin, numberOfWires, mqtttopic, name, offset);
     }
 
-    void update()
-    {
-      if (millis() > (lastCalled + DEFAULT_SENSOR_UPDATE_INTERVAL))
-      {
+    void update(){
+      if (millis() > (lastCalled + DEFAULT_SENSOR_UPDATE_INTERVAL)){
         value = maxChip.temperature(RNOMINAL, RREF);
 
         // sensor reads very low temps if disconnected
@@ -151,16 +132,13 @@ class PTSensor
       }
     }
 
-    void change(String newCSPin, byte newNumberOfWires, String newMqttTopic, String newName, float newOffset)
-    {
+    void change(String newCSPin, byte newNumberOfWires, String newMqttTopic, String newName, float newOffset){
       // check for initial empty array entry initialization
       // (no actual sensor defined in this call)
-      if (newCSPin != "")
-      {
+      if (newCSPin != ""){
         byte byteNewCSPin = StringToPin(newCSPin);
         // if this pin fits the bill, go for it..
-        if (isPin(byteNewCSPin))
-        {
+        if (isPin(byteNewCSPin)){
           pins_used[csPin] = false;
           csPin = byteNewCSPin;
           pins_used[csPin] = true;
@@ -173,32 +151,100 @@ class PTSensor
           Serial.print(newNumberOfWires);
           Serial.print(" wires. CS Pin is ");
           Serial.println(PinToString(csPin));
-          if (newNumberOfWires == 4)
-          {
+          if (newNumberOfWires == 4){
             maxChip.begin(MAX31865_4WIRE);
-          }
-          else if (newNumberOfWires == 3)
-          {
+          } else if (newNumberOfWires == 3){
             maxChip.begin(MAX31865_3WIRE);
-          }
-          else
-          {
+          } else{
             maxChip.begin(MAX31865_2WIRE); // set to 2 wires as default
           }
         }
       }
     }
 
-    void publishmqtt()
-    {
-      if (client.connected())
-      {
+    void publishmqtt(){
+      if (client.connected()) {
         client.publish(mqttTopic, getValueString());
       }
     }
 
-    char *getValueString()
-    {
+    char *getValueString(){
+      char buf[8];
+      dtostrf(value, 3, 2, buf);
+      return buf;
+    }
+};
+
+class DistanceSensor{
+  private:
+    unsigned long lastCalled; // timestamp
+
+  public:
+    byte triggerPin; // set to some default
+    byte echoPin; // set to default
+    char mqttTopic[50];
+    String name; // just a name that is displayed (in frontend)
+    float value; // value to be send in cm
+
+    DistanceSensor(String triggerPin, String echoPin, String mqtttopic, String name){
+      Serial.print("Init sensor " + name);
+      change(triggerPin, echoPin, mqtttopic, name);
+    }
+
+    void update(){
+      if (millis() > (lastCalled + DEFAULT_SENSOR_UPDATE_INTERVAL)){
+        digitalWrite(triggerPin, HIGH);
+        delayMicroseconds(200); // wait between switching (more than enough)
+        digitalWrite(triggerPin, LOW);
+        value = pulseIn(echoPin, HIGH);
+        value = ((value * 0.034) / 2);
+        
+        // sensor reads less than 20cm if disconnected or distance too close
+        if (value < 20){
+          value = -127.0;
+        }
+        else{
+          publishmqtt(); // and send
+        }
+        lastCalled = millis();
+      }
+    }
+
+    void change(String newTriggerPin, String newEchoPin, String newMqttTopic, String newName){
+      // check for initial empty array entry initialization
+      // (no actual sensor defined in this call)
+      if (newTriggerPin != ""){
+        byte byteNewTriggerPin = StringToPin(newTriggerPin);
+        byte byteNewEchoPin = StringToPin(newEchoPin);
+        // if these pins fit the bill, go for it..
+        if (isPin(byteNewTriggerPin) && isPin(byteNewEchoPin)){
+          pins_used[triggerPin] = false;
+          pins_used[echoPin] = false;
+          triggerPin = byteNewTriggerPin;
+          echoPin = byteNewEchoPin;
+          pins_used[triggerPin] = true;
+          pins_used[echoPin] = true;
+          
+          newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
+          name = newName;
+          pinMode(echoPin, INPUT);
+          pinMode(triggerPin, OUTPUT);
+          digitalWrite(echoPin, HIGH);
+          Serial.print("Starting distance sensor with trigger pin ");
+          Serial.print(PinToString(triggerPin));
+          Serial.print(" and echo pin ");
+          Serial.println(PinToString(echoPin));
+        }
+      }
+    }
+
+    void publishmqtt(){
+      if (client.connected()){
+        client.publish(mqttTopic, getValueString());
+      }
+    }
+
+    char *getValueString(){
       char buf[8];
       dtostrf(value, 3, 2, buf);
       return buf;
@@ -228,24 +274,34 @@ PTSensor ptSensors[NUMBER_OF_SENSORS_MAX] = {
   PTSensor("",0,"","",0)
 };
 
+DistanceSensor distanceSensors[NUMBER_OF_SENSORS_MAX] = {
+  DistanceSensor("D1","D6","testTopic","test"),
+  DistanceSensor("","","",""),
+  DistanceSensor("","","",""),
+  DistanceSensor("","","",""),
+  DistanceSensor("","","",""),
+  DistanceSensor("","","","")
+};
+
 /* Called in loop() */
 void handleSensors()
 {
-  for (int i = 0; i < numberOfOneWireSensors; i++)
-  {
+  for (int i = 0; i < numberOfOneWireSensors; i++){
     oneWireSensors[i].update();
     yield();
   }
-  for (int i = 0; i < numberOfPTSensors; i++)
-  {
+  for (int i = 0; i < numberOfPTSensors; i++){
     ptSensors[i].update();
+    yield();
+  }
+  for (int i = 0; i < numberOfDistanceSensors; i++){
+    distanceSensors[i].update();
     yield();
   }
 }
 
 /* Search the OneWire bus for available sensor addresses */
-byte searchOneWireSensors()
-{
+byte searchOneWireSensors(){
   byte n = 0;
   byte addr[8];
   while (oneWire.search(addr))
@@ -268,8 +324,7 @@ byte searchOneWireSensors()
 }
 
 /* Convert the OneWire sensor address to a (printable) string */
-String OneWireAddressToString(byte addr[8])
-{
+String OneWireAddressToString(byte addr[8]){
   char charbuffer[50];
   sprintf(charbuffer, "%02x%02x%02x%02x%02x%02x%02x%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
   return charbuffer;
@@ -278,16 +333,13 @@ String OneWireAddressToString(byte addr[8])
 /* All following fuctions called from frontend (mapping in 0_Setup.ino) */
 
 /* Update sensor attributes or create new sensor.*/
-void handleSetSensor()
-{
+void handleSetSensor(){
   int id = server.arg(0).toInt();
   String type = server.arg(1);
 
-  if (type == SENSOR_TYPE_ONE_WIRE)
-  {
+  if (type == SENSOR_TYPE_ONE_WIRE){
     // means: create new sensor request
-    if (id == -1)
-    {
+    if (id == -1){
       id = numberOfOneWireSensors;
       numberOfOneWireSensors += 1;
       // first sensor, block OneWire sensor pins
@@ -301,11 +353,9 @@ void handleSetSensor()
     float newOffset = server.arg(5).toFloat();
     oneWireSensors[id].change(newAddress, newTopic, newName, newOffset);
   }
-  else if (type == SENSOR_TYPE_PT)
-  {
+  else if (type == SENSOR_TYPE_PT){
     // means: create new sensor request
-    if (id == -1)
-    {
+    if (id == -1){
       id = numberOfPTSensors;
       numberOfPTSensors += 1;
       // first sensor, block PT sensor pins
@@ -322,9 +372,20 @@ void handleSetSensor()
     float newOffset = server.arg(6).toFloat();
     ptSensors[id].change(newCsPin, newNumberOfWires, newTopic, newName, newOffset);
   }
+   else if (type == SENSOR_TYPE_ULTRASONIC){
+    // means: create new sensor request
+    if (id == -1){
+      id = numberOfDistanceSensors;
+      numberOfDistanceSensors += 1;
+    }
+    String newName = server.arg(2);
+    String newTopic = server.arg(3);
+    String newTriggerPin = server.arg(4);
+    String newEchoPin = server.arg(5);
+    distanceSensors[id].change(newTriggerPin, newEchoPin, newTopic, newName);
+  }
   // unknown type
-  else
-  {
+  else{
     server.send(400, "text/plain", "Unknown Sensor Type");
     return;
   }
@@ -334,8 +395,7 @@ void handleSetSensor()
 }
 
 /* Delete a sensor.*/
-void handleDelSensor()
-{
+void handleDelSensor(){
   int id = server.arg(0).toInt();
   String type = server.arg(1);
   // OneWire

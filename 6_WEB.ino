@@ -76,7 +76,7 @@ void mqttreconnect()
   if (!client.connected())
   {
     // Delay prüfen
-    if (millis() > mqttconnectlasttry + MQTT_CONNECT_DELAY)
+    if (millis() > mqttconnectlasttry + MQTT_CONNECT_DELAY_SECONDS * 1000)
     {
       String mqttAddress(mqtthost);
       Serial.print("MQTT trying to connect to ");
@@ -96,7 +96,7 @@ void mqttreconnect()
       }
       mqttconnectlasttry = millis();
       Serial.print(".. Failed. Trying again in ");
-      Serial.print(MQTT_CONNECT_DELAY / 1000);
+      Serial.print(MQTT_CONNECT_DELAY_SECONDS);
       Serial.println(" seconds.");
       return;
     }

@@ -7,6 +7,7 @@
  * - Control of GGM Induction cooker IDS2 (emulates original control device)
  * - DS18B20 sensors
  * - PT100/1000 sensors (using the Adafruit max31865 amplifier and library)
+ * - Ultrasonic sensors (useful for measuring fill levels, automate your lautering)
  * - GIPO controlled actors with emulated PWM
  * - OverTheAir firmware updates
  *
@@ -40,9 +41,9 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.0.4 (26.03.2020)";
+const String DEVICE_VERSION = "v1.0.5 (xx.xx.2020)";
 
-// Default PINS (for initialization, can be configured via Web frontend, see also 99_PINMAP_WEMOS_D1Mini)
+// default PINS (for initialization, can be configured via Web frontend, see also 99_PINMAP_WEMOS_D1Mini)
 const byte ONE_WIRE_BUS = D8;
 /*
  * Common pins across all PT100/1000 sensors: DI, DO, CLK.
@@ -53,20 +54,17 @@ const byte PT_PINS[3] = {D4, D3, D0};
 
 // Ranges from 9 to 12, higher is better (and slower!)
 const byte ONE_WIRE_RESOLUTION = 10;
-// 430.0 for PT100 and 4300.0 for PT1000
-const float RREF = 430.0;
-// 100.0 for PT100, 1000.0 for PT1000
-const float RNOMINAL = 100.0;
-// Default pin for the CS of a PT sensor (placeholder)
-const byte DEFAULT_CS_PIN = D1;
+const float RREF = 430.0; // 430.0 for PT100 and 4300.0 for PT1000
+const float RNOMINAL = 100.0; // 100.0 for PT100, 1000.0 for PT1000
+const byte DEFAULT_CS_PIN = D1; // default pin for the CS of a PT sensor (placeholder)
 
 // WiFi and MQTT
 const int WEB_SERVER_PORT = 80;
 const int TELNET_SERVER_PORT = 8266;
 const int MQTT_SERVER_PORT = 1883;
-const byte ACCESS_POINT_MODE_TIMEOUT = 20; // In seconds, device restarts if no one connected to AP during this time
-const char AP_PASSPHRASE[16] = "indebrau"; // Passphrase to access the Wifi access point
-const int UPDATE = 500; // How often should the system update state ("call all routines")
+const byte ACCESS_POINT_MODE_TIMEOUT = 20; // in seconds, device restarts if no one connected to AP during this time
+const char AP_PASSPHRASE[16] = "indebrau"; // passphrase to access the Wifi access point
+const int UPDATE = 500; // how often should the system update state ("call all routines")
 const int DEFAULT_SENSOR_UPDATE_INTERVAL = 2000; // how often should sensors provide new readings (>= UPDATE)
 
 // Display
@@ -74,12 +72,13 @@ const byte SCREEN_WIDTH = 128; // Display width, in pixels
 const byte SCREEN_HEIGHT = 32;// Display height, in pixels
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-// Differentiate between the two currently supported sensor types
+// Differentiate between the three currently supported sensor types
 const String SENSOR_TYPE_ONE_WIRE = "OneWire";
 const String SENSOR_TYPE_PT = "PTSensor";
+const String SENSOR_TYPE_ULTRASONIC = "Ultrasonic";
 
 // MQTT reconnect settings
-const long MQTT_CONNECT_DELAY = 10000;
+const byte MQTT_CONNECT_DELAY_SECONDS = 10;
 const byte MQTT_NUMBER_OF_TRIES = 1;
 
 // Induction cooker signal timings
@@ -125,9 +124,10 @@ int CMD[6][33] = {
 
 bool pins_used[17]; // careful here, these are not only the Wemos-numbered GIPO (D0-D8), but all of them!
 
-byte numberOfPTSensors = 0; // Current number of PT100 sensors
-byte numberOfOneWireSensors = 0; // Current number of OneWire sensors
-byte numberOfActors = 0; // Current number of actors
+byte numberOfPTSensors = 0; // current number of PT100 sensors
+byte numberOfOneWireSensors = 0; // current number of OneWire sensors
+byte numberOfDistanceSensors = 1; // current number of distance sensors
+byte numberOfActors = 0; // current number of actors
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);

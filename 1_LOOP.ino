@@ -15,7 +15,7 @@ void loop()
        * Prevents being stuck in Access Point mode when Wifi signal was
        * temporarily lost. 
        */
-      if(!wifiManager.autoConnect(deviceName)) {
+      if(!wifiManager.autoConnect(deviceName)){
         Serial.println("Connection not possible, timeout, restart!");
         rebootDevice();
       } 
