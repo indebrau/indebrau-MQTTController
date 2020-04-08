@@ -432,11 +432,23 @@ void handleDelSensor(){
       pins_used[PT_PINS[1]] = false;
       pins_used[PT_PINS[2]] = false;
     }
-  }
-  // unknown type
-  else
-  {
-    server.send(400, "text/plain", "Unknown Sensor Type");
+  } else if (type == SENSOR_TYPE_ULTRASONIC) {
+    // first declare the pin unused
+    pins_used[distanceSensors[id].triggerPin] = false;
+      pins_used[distanceSensors[id].echoPin] = false;
+    // move all sensors following the given id one to the front of array,
+    // effectively overwriting the sensor to be deleted..
+    for (int i = id; i < numberOfDistanceSensors; i++)
+    {
+      String triggerPin = String(distanceSensors[i + 1].triggerPin); // yeah, not very nice or efficient..
+      String echoPin = String(distanceSensors[i + 1].echoPin); // yeah, not very nice or efficient..
+      distanceSensors[i].change(triggerPin, echoPin, distanceSensors[i + 1].mqttTopic, distanceSensors[i + 1].name);
+      yield();
+    }
+    // ..and declare the array's content to one sensor less
+    numberOfDistanceSensors -= 1;
+  } else {
+    server.send(400, "text/plain", "Unknown sensor type");
     return;
   }
   // all done, save and exit
@@ -445,15 +457,13 @@ void handleDelSensor(){
 }
 
 /* Provides search results of OneWire bus search */
-void handleRequestOneWireSensorAddresses()
-{
+void handleRequestOneWireSensorAddresses(){
   numberOfOneWireSensorsFound = searchOneWireSensors();
   int id = server.arg(0).toInt();
   String message = "";
   // if id given, render this sensor's address first
   // and check if id is valid (client could send nonsense for id..)
-  if (id != -1 && id < numberOfOneWireSensors)
-  {
+  if (id != -1 && id < numberOfOneWireSensors){
     message += F("<option>");
     message += oneWireSensors[id].getSens_address_string();
     message += F("</option><option disabled>──────────</option>");
@@ -462,8 +472,7 @@ void handleRequestOneWireSensorAddresses()
   for (int i = 0; i < numberOfOneWireSensorsFound; i++)
   {
     String foundAddress = OneWireAddressToString(oneWireAddressesFound[i]);
-    if (id == -1 || !(oneWireSensors[id].getSens_address_string() == foundAddress))
-    {
+    if (id == -1 || !(oneWireSensors[id].getSens_address_string() == foundAddress)){
       message += F("<option>");
       message += foundAddress;
       message += F("</option>");
@@ -473,20 +482,17 @@ void handleRequestOneWireSensorAddresses()
   server.send(200, "text/html", message);
 }
 
-/* Similar as the actor pin request function, but this time for PT sensors */
-void handleRequestPtSensorPins()
-{
+/* Similar as the actor pin request function, but this time for PT sensor CS pin */
+void handleRequestPtSensorPins(){
   int id = server.arg(0).toInt();
   String message;
 
-  if (id != -1)
-  {
+  if (id != -1){
     message += F("<option>");
     message += PinToString(ptSensors[id].csPin);
     message += F("</option><option disabled>──────────</option>");
   }
-  for (int i = 0; i < NUMBER_OF_PINS; i++)
-  {
+  for (int i = 0; i < NUMBER_OF_PINS; i++){
     if (pins_used[PINS[i]] == false)
     {
       message += F("<option>");
