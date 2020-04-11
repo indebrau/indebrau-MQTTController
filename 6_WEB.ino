@@ -4,7 +4,8 @@ void handleRoot()
   server.send(302, "text/plain", "");
 }
 
-void handleWebRequests(){
+void handleWebRequests()
+{
   if (loadFromSpiffs(server.uri()))
   {
     return;
@@ -24,7 +25,8 @@ void handleWebRequests(){
   server.send(404, "text/plain", message);
 }
 
-bool loadFromSpiffs(String path){
+bool loadFromSpiffs(String path)
+{
   String dataType = "text/plain";
   if (path.endsWith("/"))
     path += "index.html";
@@ -54,19 +56,22 @@ bool loadFromSpiffs(String path){
   else if (path.endsWith(".zip"))
     dataType = "application/zip";
 
-  if (!SPIFFS.exists(path.c_str())){
+  if (!SPIFFS.exists(path.c_str()))
+  {
     return false;
   }
   File dataFile = SPIFFS.open(path.c_str(), "r");
   if (server.hasArg("download"))
     dataType = "application/octet-stream";
-  if (server.streamFile(dataFile, dataType) != dataFile.size()){
+  if (server.streamFile(dataFile, dataType) != dataFile.size())
+  {
   }
   dataFile.close();
   return true;
 }
 
-void mqttreconnect(){
+void mqttreconnect()
+{
   // Wenn Client nicht verbunden, Verbindung herstellen
   if (!client.connected())
   {

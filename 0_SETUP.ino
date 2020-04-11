@@ -5,24 +5,27 @@ void setup()
 
   // Load spif file system
   ESP.wdtFeed();
-  if (!SPIFFS.begin()) {
+  if (!SPIFFS.begin())
+  {
     Serial.println("SPIFFS Mount failed");
   }
 
   // Load settings from config.json
   ESP.wdtFeed();
   loadConfig();
-  
+
   // declare OneWire and PT Pins as used
-  if(numberOfOneWireSensors > 0){
-      pins_used[ONE_WIRE_BUS] = true;
+  if (numberOfOneWireSensors > 0)
+  {
+    pins_used[ONE_WIRE_BUS] = true;
   }
-  if(numberOfPTSensors > 0){
+  if (numberOfPTSensors > 0)
+  {
     pins_used[PT_PINS[0]] = true;
     pins_used[PT_PINS[1]] = true;
     pins_used[PT_PINS[2]] = true;
   }
-  
+
   // Start sensors
   DS18B20.begin();
 
@@ -32,7 +35,8 @@ void setup()
   wifiManager.setTimeout(ACCESS_POINT_MODE_TIMEOUT);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-  if(!wifiManager.autoConnect(deviceName, AP_PASSPHRASE)) {
+  if (!wifiManager.autoConnect(deviceName, AP_PASSPHRASE))
+  {
     Serial.println("Connection not possible, timeout, restart!");
     rebootDevice();
   }
@@ -50,16 +54,17 @@ void setup()
   setupServer();
 
   // start display if applicable
-  if(useDisplay) {
+  if (useDisplay)
+  {
     pins_used[firstDisplayPin] = true;
     pins_used[secondDisplayPin] = true;
     Wire.begin(firstDisplayPin, secondDisplayPin); // SDA and SCL
-    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for 128x32
-    Serial.println(F("SSD1306 allocation failed"));
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+    { // Address 0x3C for 128x32
+      Serial.println(F("SSD1306 allocation failed"));
     }
     drawDisplayContentError();
   }
-
 }
 
 void setupServer()
@@ -96,8 +101,8 @@ void setupServer()
   server.on("/getSysConfig", getSysConfig); // returns display config and mqtthost as json
   server.on("/setSysConfig", setSysConfig); // saves display config and mqtthost to config file
 
-  server.on("/version", getVersion); // returns the (hardcoded) firmware version of this device
-  server.on("/mqttStatus", getMqttStatus); // returns the current MQTT connection status
+  server.on("/version", getVersion);        // returns the (hardcoded) firmware version of this device
+  server.on("/mqttStatus", getMqttStatus);  // returns the current MQTT connection status
   server.on("/getOtherPins", getOtherPins); // returns other configuration (used pins)
 
   server.onNotFound(handleWebRequests); // fallback
@@ -105,7 +110,8 @@ void setupServer()
   server.begin();
 }
 
-void setupOTA(){
+void setupOTA()
+{
   Serial.print("Configuring OTA device...");
   TelnetServer.begin(); // necesary to autodetect OTA device
   ArduinoOTA.onStart([]() {
