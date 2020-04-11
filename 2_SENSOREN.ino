@@ -233,8 +233,9 @@ public:
       value = pulseIn(echoPin, HIGH);
       value = ((value * 0.034) / 2);
 
-      // sensor reads less than 20cm if disconnected or distance too close
-      if (value < 20)
+      // sensor reads less than 25cm if disconnected or distance too close
+      // sensor reads very high values if too close (-> range 25 < x < 100)
+      if (value < 25 || value > 100)
       {
         value = -127.0;
       }
@@ -622,7 +623,7 @@ void handleRequestSensors()
     sensorsResponse.add(sensorResponse);
     yield();
   }
-    for (int i = 0; i < numberOfDistanceSensors; i++)
+  for (int i = 0; i < numberOfDistanceSensors; i++)
   {
     JsonObject &sensorResponse = jsonBuffer.createObject();
     sensorResponse["name"] = distanceSensors[i].name;
@@ -660,7 +661,6 @@ void handleRequestSensorConfig()
     {
       response = "not found";
       server.send(404, "text/plain", response);
-      return;
     }
     else
     {
@@ -671,7 +671,6 @@ void handleRequestSensorConfig()
       sensorJson["offset"] = oneWireSensors[id].offset;
       sensorJson.printTo(response);
       server.send(200, "application/json", response);
-      return;
     }
   }
   else if (type == SENSOR_TYPE_PT)
@@ -680,7 +679,6 @@ void handleRequestSensorConfig()
     {
       response = "not found";
       server.send(404, "text/plain", response);
-      return;
     }
     else
     {
@@ -693,11 +691,31 @@ void handleRequestSensorConfig()
       sensorJson["offset"] = ptSensors[id].offset;
       sensorJson.printTo(response);
       server.send(200, "application/json", response);
-      return;
     }
   }
-  response = "unknown type: ";
-  response += type;
-  server.send(406, "text/plain", response);
-  return;
+  else if (type == SENSOR_TYPE_ULTRASONIC)
+  {
+    if (id == -1 || id > numberOfDistanceSensors)
+    {
+      response = "not found";
+      server.send(404, "text/plain", response);
+    }
+    else
+    {
+      StaticJsonBuffer<1024> jsonBuffer;
+      JsonObject &sensorJson = jsonBuffer.createObject();
+      sensorJson["name"] = distanceSensors[id].name;
+      sensorJson["topic"] = distanceSensors[id].mqttTopic;
+      sensorJson["triggerPin"] = PinToString(distanceSensors[id].triggerPin);
+      sensorJson["echoPin"] = PinToString(distanceSensors[id].echoPin);
+      sensorJson.printTo(response);
+      server.send(200, "application/json", response);
+    }
+  }
+  else
+  {
+    response = "unknown type: ";
+    response += type;
+    server.send(406, "text/plain", response);
+  }
 }

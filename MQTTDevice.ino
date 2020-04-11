@@ -1,5 +1,5 @@
 /*
- * 
+ *
  * Sketch for ESP8266
  *
  * MQTT communication with CraftBeerPi v3
@@ -15,7 +15,7 @@
 */
 
 /*########## INCLUDES ##########*/
-#include <OneWire.h> // OneWire communication
+#include <OneWire.h>           // OneWire communication
 #include <DallasTemperature.h> // easier usage of DS18B20 sensors
 
 // display
@@ -25,15 +25,14 @@
 
 #include <Adafruit_MAX31865.h> // PT100/1000
 
-#include <ESP8266WiFi.h> // general WiFi functionality
+#include <ESP8266WiFi.h>      // general WiFi functionality
 #include <ESP8266WebServer.h> // Webserver support
-#include <WiFiManager.h> // for configuring in access point mode
-#include <DNSServer.h> // needed for WiFiManager
-#include <PubSubClient.h> // MQTT
-#include <EEPROM.h> // stores the config file
+#include <WiFiManager.h>      // for configuring in access point mode
+#include <DNSServer.h>        // needed for WiFiManager
+#include <PubSubClient.h>     // MQTT
+#include <EEPROM.h>           // stores the config file
 
-
-#include <FS.h> // SPIFFS access
+#include <FS.h>          // SPIFFS access
 #include <ArduinoJson.h> // JSON support
 
 // OTA
@@ -55,22 +54,22 @@ const byte PT_PINS[3] = {D4, D3, D0};
 
 // ranges betwee 9 and 12, higher is better (and slower)
 const byte ONE_WIRE_RESOLUTION = 10;
-const float RREF = 430.0; // 430.0 for PT100 and 4300.0 for PT1000
-const float RNOMINAL = 100.0; // 100.0 for PT100, 1000.0 for PT1000
+const float RREF = 430.0;       // 430.0 for PT100 and 4300.0 for PT1000
+const float RNOMINAL = 100.0;   // 100.0 for PT100, 1000.0 for PT1000
 const byte DEFAULT_CS_PIN = D1; // default pin for the CS of a PT sensor (placeholder)
 
 // WiFi and MQTT
 const int WEB_SERVER_PORT = 80;
 const int TELNET_SERVER_PORT = 8266;
 const int MQTT_SERVER_PORT = 1883;
-const byte ACCESS_POINT_MODE_TIMEOUT = 20; // in seconds, device restarts if no one connected to AP during this time
-const char AP_PASSPHRASE[16] = "indebrau"; // passphrase to access the Wifi access point
-const int UPDATE = 500; // how often should the system update state ("call all routines")
+const byte ACCESS_POINT_MODE_TIMEOUT = 20;       // in seconds, device restarts if no one connected to AP during this time
+const char AP_PASSPHRASE[16] = "indebrau";       // passphrase to access the Wifi access point
+const int UPDATE = 500;                          // how often should the system update state ("call all routines")
 const int DEFAULT_SENSOR_UPDATE_INTERVAL = 2000; // how often should sensors provide new readings (>= UPDATE)
 
-// Display
+// display
 const byte SCREEN_WIDTH = 128; // display width, in pixels
-const byte SCREEN_HEIGHT = 32;// display height, in pixels
+const byte SCREEN_HEIGHT = 32; // display height, in pixels
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 // differentiate between the three currently supported sensor types
@@ -78,7 +77,7 @@ const String SENSOR_TYPE_ONE_WIRE = "OneWire";
 const String SENSOR_TYPE_PT = "PTSensor";
 const String SENSOR_TYPE_ULTRASONIC = "Ultrasonic";
 
-// MQTT reconnect settings
+//  MQTT reconnect settings
 const byte MQTT_CONNECT_DELAY_SECONDS = 10;
 const byte MQTT_NUMBER_OF_TRIES = 1;
 
@@ -103,7 +102,7 @@ const byte PINS[NUMBER_OF_PINS] = {D0, D1, D2, D3, D4, D5, D6, D7, D8};
 const String PIN_NAMES[NUMBER_OF_PINS] = {"D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"};
 
 const byte NUMBER_OF_SENSORS_MAX = 6; // max number of sensors per type (if changed, please init accordingly!)
-const byte NUMBER_OF_ACTORS_MAX = 6; // max number of actors
+const byte NUMBER_OF_ACTORS_MAX = 6;  // max number of actors
 
 /*########## GLOBAL VARIABLES #########*/
 
@@ -115,20 +114,20 @@ WiFiServer TelnetServer(TELNET_SERVER_PORT); // OTA
 
 // init binary signals for induction cooker (not constants, changing!)
 int CMD[6][33] = {
-  {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, // Off
-  {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P1
-  {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0}, // P2
-  {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0}, // P3
-  {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0}, // P4
-  {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}  // P5
+    {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, // Off
+    {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P1
+    {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0}, // P2
+    {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0}, // P3
+    {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0}, // P4
+    {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}  // P5
 };
 
 bool pins_used[17]; // careful here, these are not only the Wemos-numbered GIPO (D0-D8), but all of them!
 
-byte numberOfOneWireSensors = 0; // current number of OneWire sensors
-byte numberOfPTSensors = 0; // current number of PT100 sensors
+byte numberOfOneWireSensors = 0;  // current number of OneWire sensors
+byte numberOfPTSensors = 0;       // current number of PT100 sensors
 byte numberOfDistanceSensors = 0; // current number of distance sensors
-byte numberOfActors = 0; // current number of actors
+byte numberOfActors = 0;          // current number of actors
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
