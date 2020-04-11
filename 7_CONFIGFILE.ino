@@ -30,7 +30,7 @@ bool loadConfig()
     return false;
   }
 
-  //Read Actors
+  // read Actors
   JsonArray &jsonactors = json["actors"];
   numberOfActors = jsonactors.size();
   Serial.print("Number of actors loaded: ");
@@ -54,7 +54,7 @@ bool loadConfig()
     }
   }
 
-  // Read OneWire sensors
+  // read OneWire sensors
   JsonArray &jsonOneWireSensors = json["OneWireSensors"];
   numberOfOneWireSensors = jsonOneWireSensors.size();
   if (numberOfOneWireSensors > NUMBER_OF_SENSORS_MAX)
@@ -82,7 +82,7 @@ bool loadConfig()
     }
   }
 
-  // Read PT100/1000 sensors
+  // read PT100/1000 sensors
   JsonArray &jsonPTSensors = json["PTSensors"];
   numberOfPTSensors = jsonPTSensors.size();
   if (numberOfPTSensors > NUMBER_OF_SENSORS_MAX)
@@ -111,7 +111,7 @@ bool loadConfig()
     }
   }
 
-  // Read distance sensors
+  // read distance sensors
   JsonArray &jsonDistanceSensors = json["DistanceSensors"];
   numberOfDistanceSensors = jsonPTSensors.size();
   if (numberOfDistanceSensors > NUMBER_OF_SENSORS_MAX)

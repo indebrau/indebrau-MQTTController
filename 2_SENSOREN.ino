@@ -622,6 +622,25 @@ void handleRequestSensors()
     sensorsResponse.add(sensorResponse);
     yield();
   }
+    for (int i = 0; i < numberOfDistanceSensors; i++)
+  {
+    JsonObject &sensorResponse = jsonBuffer.createObject();
+    sensorResponse["name"] = distanceSensors[i].name;
+    // We reuse "OneWire Error Codes" here for simplicity
+    if (distanceSensors[i].value != -127.0)
+    {
+      sensorResponse["value"] = distanceSensors[i].getValueString();
+    }
+    else
+    {
+      sensorResponse["value"] = "ERR";
+    }
+    sensorResponse["mqtt"] = distanceSensors[i].mqttTopic;
+    sensorResponse["type"] = SENSOR_TYPE_ULTRASONIC;
+    sensorResponse["id"] = i;
+    sensorsResponse.add(sensorResponse);
+    yield();
+  }
   String response;
   sensorsResponse.printTo(response);
   server.send(200, "application/json", response);

@@ -154,7 +154,7 @@ public:
 };
 
 /* Initialisierung des Arrays */
-Actor actors[6] = {
+Actor actors[NUMBER_OF_ACTORS_MAX] = {
     Actor("", "", "", ""),
     Actor("", "", "", ""),
     Actor("", "", "", ""),
