@@ -275,7 +275,7 @@ PTSensor ptSensors[NUMBER_OF_SENSORS_MAX] = {
 };
 
 DistanceSensor distanceSensors[NUMBER_OF_SENSORS_MAX] = {
-  DistanceSensor("D1","D6","testTopic","test"),
+  DistanceSensor("","","",""),
   DistanceSensor("","","",""),
   DistanceSensor("","","",""),
   DistanceSensor("","","",""),
@@ -383,9 +383,7 @@ void handleSetSensor(){
     String newTriggerPin = server.arg(4);
     String newEchoPin = server.arg(5);
     distanceSensors[id].change(newTriggerPin, newEchoPin, newTopic, newName);
-  }
-  // unknown type
-  else{
+  } else{
     server.send(400, "text/plain", "Unknown Sensor Type");
     return;
   }
@@ -402,8 +400,7 @@ void handleDelSensor(){
   if (type == SENSOR_TYPE_ONE_WIRE){
     // move all sensors following the given id one to the front of array,
     // effectively overwriting the sensor to be deleted..
-    for (int i = id; i < numberOfOneWireSensors; i++)
-    {
+    for (int i = id; i < numberOfOneWireSensors; i++){
       oneWireSensors[i].change(oneWireSensors[i + 1].getSens_address_string(), oneWireSensors[i + 1].mqtttopic, oneWireSensors[i + 1].name, oneWireSensors[i + 1].offset);
       yield();
     }
@@ -469,8 +466,7 @@ void handleRequestOneWireSensorAddresses(){
     message += F("</option><option disabled>──────────</option>");
   }
   // Now render all found addresses, except the one already assigned to the sensor
-  for (int i = 0; i < numberOfOneWireSensorsFound; i++)
-  {
+  for (int i = 0; i < numberOfOneWireSensorsFound; i++){
     String foundAddress = OneWireAddressToString(oneWireAddressesFound[i]);
     if (id == -1 || !(oneWireSensors[id].getSens_address_string() == foundAddress)){
       message += F("<option>");
@@ -493,8 +489,7 @@ void handleRequestPtSensorPins(){
     message += F("</option><option disabled>──────────</option>");
   }
   for (int i = 0; i < NUMBER_OF_PINS; i++){
-    if (pins_used[PINS[i]] == false)
-    {
+    if (pins_used[PINS[i]] == false){
       message += F("<option>");
       message += PIN_NAMES[i];
       message += F("</option>");

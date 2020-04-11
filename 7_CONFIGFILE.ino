@@ -92,6 +92,29 @@ bool loadConfig() {
     }
   }
 
+  // Read distance sensors
+  JsonArray &jsonDistanceSensors = json["DistanceSensors"];
+  numberOfDistanceSensors = jsonPTSensors.size();
+  if (numberOfDistanceSensors > NUMBER_OF_SENSORS_MAX) {
+    numberOfDistanceSensors = NUMBER_OF_SENSORS_MAX;
+  }
+  Serial.print("Number of distance sensors loaded: ");
+  Serial.println(numberOfDistanceSensors);
+
+  for (int i = 0; i < NUMBER_OF_SENSORS_MAX; i++) {
+    if (i < numberOfDistanceSensors) {
+      JsonObject &jsonDistanceSensor = jsonDistanceSensors[i];
+      String triggerPin = jsonDistanceSensor["TRIGGERPIN"];
+      String echoPin = jsonDistanceSensor["ECHOPIN"];
+      String topic = jsonDistanceSensor["TOPIC"];
+      String name = jsonDistanceSensor["NAME"];
+
+      distanceSensors[i].change(triggerPin, echoPin, topic, name);
+    } else {
+      distanceSensors[i].change("", "", "", "");
+    }
+  }
+
   // Read induction
   JsonArray &jsinductions = json["induction"];
   JsonObject &jsinduction = jsinductions[0];
@@ -165,6 +188,17 @@ bool saveConfig() {
     jsonPTSensor["OFFSET"] = ptSensors[i].offset;
   }
 
+
+  // Write distance sensors
+  JsonArray &jsonDistanceSensors = json.createNestedArray("DistanceSensors");
+  for (int i = 0; i < numberOfDistanceSensors; i++) {
+    JsonObject &jsonDistanceSensor = jsonDistanceSensors.createNestedObject();
+    jsonDistanceSensor["TRIGGERPIN"] = PinToString(distanceSensors[i].triggerPin);
+    jsonDistanceSensor["ECHOPIN"] = PinToString(distanceSensors[i].echoPin);
+    jsonDistanceSensor["NAME"] = distanceSensors[i].name;
+    jsonDistanceSensor["TOPIC"] = distanceSensors[i].mqttTopic;
+  }
+  
   // Write induction
   JsonArray &jsinductions = json.createNestedArray("induction");
   JsonObject &jsinduction = jsinductions.createNestedObject();
