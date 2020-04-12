@@ -297,7 +297,7 @@ void handleDelActor()
   server.send(200, "text/plain", "deleted");
 }
 
-void handleRequestPins()
+void handleRequestActorPins()
 {
   int id = server.arg(0).toInt();
   String message;

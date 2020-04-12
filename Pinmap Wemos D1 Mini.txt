@@ -1,0 +1,18 @@
+Arduino | Wemos D1 Mini
+0  | D3
+1  | TX
+2  | D4
+3  | RX
+4  | D2
+5  | D1
+6  | NOT_EXISTING
+7  | NOT_EXISTING
+8  | NOT_EXISTING
+9  | NOT_EXISTING
+10 | NOT_EXISTING
+11 | NOT_EXISTING
+12 |D6
+13 |D7
+14 |D5
+15 |D8
+16 |D0

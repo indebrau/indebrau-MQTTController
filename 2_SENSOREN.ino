@@ -136,8 +136,8 @@ public:
     {
       value = maxChip.temperature(RNOMINAL, RREF);
 
-      // sensor reads very low temps if disconnected
-      if (maxChip.readFault() || value < -100)
+      // sensor reads very low or high temps if disconnected
+      if (maxChip.readFault() || value < -100 || value > 110)
       {
         value = -127.0;
         maxChip.clearFault();
@@ -550,17 +550,32 @@ void handleRequestOneWireSensorAddresses()
 }
 
 /* Similar as the actor pin request function, but this time for PT sensor CS pin */
-void handleRequestPtSensorPins()
+void handleRequestSensorPins()
 {
   int id = server.arg(0).toInt();
   String message;
 
-  if (id != -1)
+  if (id != -1) // given pin
   {
     message += F("<option>");
-    message += PinToString(ptSensors[id].csPin);
+    if (server.arg(1) == SENSOR_TYPE_PT)
+    {
+      message += PinToString(ptSensors[id].csPin);
+    }
+    if (server.arg(1) == SENSOR_TYPE_ULTRASONIC)
+    {
+      if (server.arg(2) == "echo")
+      {
+        message += PinToString(distanceSensors[id].echoPin);
+      }
+      else if (server.arg(2) == "trigger")
+      {
+        message += PinToString(distanceSensors[id].triggerPin);
+      }
+    }
     message += F("</option><option disabled>──────────</option>");
   }
+  // not add all free pins
   for (int i = 0; i < NUMBER_OF_PINS; i++)
   {
     if (pins_used[PINS[i]] == false)

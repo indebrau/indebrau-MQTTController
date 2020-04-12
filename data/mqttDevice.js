@@ -1,0 +1,525 @@
+/* updates sensor-, actor-, induction- and mqtt status, called periodically */
+function refresh() {
+  $.get("/mqttStatus", function (data) {
+    $("#mqttStatus").html(data);
+  });
+  $.get("/getOtherPins", function (data) {
+    $("#otherPins").html(data);
+  });
+  $.get("/reqSensors", function (data) {
+    let content = "";
+    data.forEach(function (element) {
+      let sensor =
+        "<li class='list-group-item justify-content-between align-items-center d-flex'> ";
+      sensor += element.name;
+      sensor += "<span class='badge badge-light'> ";
+      if (element.value === "ERR") {
+        sensor += "Error";
+      } else {
+        if (element.type === "PTSensor" || element.type === "OneWire") {
+          sensor += element.value + "°C";
+        } else if (element.type === "Ultrasonic") {
+          sensor += element.value + " cm";
+        } else {
+          sensor += element.value + " unknown unit";
+        }
+      }
+      sensor += " </span> <span class='badge badge-info'> ";
+      sensor += element.type;
+      sensor += " </span> <span class='badge badge-info'> ";
+      sensor += element.mqtt;
+      sensor +=
+        " </span> <a href='' class='badge badge-warning' data-toggle='modal' data-target='#sensor_modal' data-id='";
+      sensor += element.id;
+      sensor += "' data-type='";
+      sensor += element.type;
+      sensor += "'> Edit </a> </li>";
+      content += sensor;
+    });
+    $("#listSensors").html(content);
+  });
+  $.get("/reqActors", function (data) {
+    let content = "";
+    data.forEach(function (element, index) {
+      let actor =
+        "<li class='list-group-item d-flex justify-content-between align-items-center'> ";
+      actor += element.name;
+      actor += " </span> <span class='badge";
+      // is actor "on"
+      if (element.status == true) {
+        actor += "badge-success'> ON:";
+        actor += element.power;
+        actor += "%";
+      } else {
+        actor += "badge-dark'> OFF";
+      }
+      actor += "</span> <span class='badge badge-light'>";
+      actor += element.mqtt;
+      actor += "</span> <span class='badge badge-light'> PIN";
+      actor += element.pin;
+      actor +=
+        "</span> <a href='' class='badge badge-warning' data-toggle='modal' data-target='#actor_modal' data-id='";
+      actor += index;
+      actor += "'> Edit </a> </li>";
+      content += actor;
+    });
+    $("#listActors").html(content);
+  });
+  $.get("/reqInduction", function (data) {
+    let inductionRender =
+      "<li class='list-group-item d-flex justify-content-between align-items-center'> ";
+    if (data.enabled) {
+      inductionRender += " Relais status <span class='badge";
+      if (data.relayOn) {
+        inductionRender += " badge-success'> ON";
+      } else {
+        inductionRender += " badge-danger'> OFF";
+      }
+      inductionRender +=
+        "</span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> Power requested <span class='badge badge-success'>";
+      inductionRender += data.power;
+      inductionRender +=
+        "%</span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> Current Power Level <span class='badge badge-success'> P";
+      inductionRender += data.powerLevel;
+      inductionRender +=
+        " </span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> </li>";
+    } else {
+      inductionRender += "Induction Cooker Disabled </li>";
+    }
+    $("#inductionCooker").html(inductionRender);
+  });
+}
+
+/* click on edit/add actor button */
+$("#actor_modal").on("show.bs.modal", function (event) {
+  var button = $(event.relatedTarget);
+  var actorid = button.data("id");
+  var actorname;
+  var actorscript;
+  var actorpin;
+  var actorinverted;
+  $.ajax({
+    url: "/reqActorConfig?id=" + actorid + "&req=name",
+    type: "get",
+    async: false,
+    cache: false,
+    success: function (data) {
+      actorname = data;
+    },
+  });
+  $.ajax({
+    url: "/reqActorConfig?id=" + actorid + "&req=script",
+    type: "get",
+    async: false,
+    cache: false,
+    success: function (data) {
+      actorscript = data;
+    },
+  });
+  $.ajax({
+    url: "/reqActorConfig?id=" + actorid + "&req=inverted",
+    type: "get",
+    async: false,
+    cache: false,
+    success: function (data) {
+      actorinverted = data;
+    },
+  });
+  var modal = $(this);
+  modal.attr("actor_id", actorid);
+  modal.find("#modal_actor_name").val(actorname);
+  modal.find("#modal_actor_script").val(actorscript);
+  $("#modal_actor_pin").load("/reqActorPins?id=" + actorid);
+  if (actorinverted == "1") {
+    modal.find("#modal_actor_inverted").prop("checked", true);
+  } else {
+    modal.find("#modal_actor_inverted").prop("checked", false);
+  }
+});
+
+/* click on save actor button in edit window */
+$("#modal_actor_btn_save").click(function () {
+  var modal = $("#actor_modal");
+  var actorname = modal.find("#modal_actor_name").val();
+  var actorscript = modal.find("#modal_actor_script").val();
+  var actorpin = modal.find("#modal_actor_pin").val();
+  if (modal.find("#modal_actor_inverted").prop("checked") == true) {
+    var actorinverted = "1";
+  } else {
+    var actorinverted = "0";
+  }
+  var actorid = modal.attr("actor_id");
+  $.ajax({
+    url:
+      "/setActor?id=" +
+      actorid +
+      "&name=" +
+      actorname +
+      "&script=" +
+      actorscript +
+      "&pin=" +
+      actorpin +
+      "&inverted=" +
+      actorinverted,
+    type: "POST",
+    async: false,
+    cache: false,
+  });
+  modal.modal("hide");
+});
+
+/* click on delete actor button in edit window */
+$("#modal_actor_btn_delete").click(function () {
+  var modal = $("#actor_modal");
+  var actorid = modal.attr("actor_id");
+  $.ajax({
+    url: "/delActor?id=" + actorid,
+    type: "POST",
+    async: false,
+    cache: false,
+  });
+  modal.modal("hide");
+});
+
+/* click on add/edit sensor button */
+$("#sensor_modal").on("show.bs.modal", function (event) {
+  // first get infos from button and transfer to window
+  var button = $(event.relatedTarget);
+  var sensorId = button.data("id");
+  var sensorType = button.data("type");
+  var modal = $(this);
+  modal.attr("sensor_id", sensorId);
+  modal.attr("sensor_type", sensorType);
+  // reset fields for new sensor creation request
+  if (sensorId == -1) {
+    modal.find("#modal_sensor_name").val("");
+    modal.find("#modal_sensor_topic").val("");
+    modal.find("#modal_sensor_offset").val("");
+  }
+  if (sensorType == "OneWire") {
+    // ui adjustments
+    $("#modal_sensor_one_wire_sensor").show();
+    $("#modal_sensor_ultrasonic_sensor").hide();
+    $("#modal_sensor_pt_sensor").hide();
+    // get available addresses
+    $("#modal_sensor_address").load("/reqSearchSensorAdresses?id=" + sensorId);
+    // check if sensorId is valid (-1 determines a "create new sensor" call)
+    if (sensorId != -1) {
+      $.ajax({
+        url: "/reqSensorConfig?id=" + sensorId + "&type=" + sensorType,
+        type: "get",
+        async: false,
+        cache: false,
+        context: this,
+        success: function (data) {
+          var modal = $(this);
+          modal.find("#modal_sensor_name").val(data.name);
+          modal.find("#modal_sensor_topic").val(data.topic);
+          modal.find("#modal_sensor_offset").val(data.offset);
+        },
+      });
+    }
+  } else if (sensorType == "PTSensor") {
+    // ui adjustments
+    $("#modal_sensor_one_wire_sensor").hide();
+    $("#modal_sensor_ultrasonic_sensor").hide();
+    $("#modal_sensor_pt_sensor").show();
+    // load pins
+    $("#modal_sensor_cs_pin").load(
+      "/reqSensorPins?id=" + sensorId + "&type=" + sensorType
+    );
+    // check if sensorId is valid (-1 determines a "create new sensor" call)
+    if (sensorId != -1) {
+      $.ajax({
+        url: "/reqSensorConfig?id=" + sensorId + "&type=" + sensorType,
+        type: "get",
+        dataType: "json",
+        async: false,
+        cache: false,
+        context: this,
+        success: function (data) {
+          var modal = $(this);
+          modal.find("#modal_sensor_name").val(data.name);
+          modal.find("#modal_sensor_topic").val(data.topic);
+          modal.find("#modal_sensor_offset").val(data.offset);
+          modal.find("#modal_sensor_number_of_wires").val(data.numberOfWires);
+        },
+      });
+    }
+  } else if (sensorType == "Ultrasonic") {
+    // ui adjustments
+    $("#modal_sensor_one_wire_sensor").hide();
+    $("#modal_sensor_pt_sensor").hide();
+    $("#modal_sensor_ultrasonic_sensor").show();
+    $("#modal_sensor_trigger_pin").load(
+      "/reqSensorPins?id=" + sensorId + "&type=" + sensorType + "&pin=trigger"
+    );
+    $("#modal_sensor_echo_pin").load(
+      "/reqSensorPins?id=" + sensorId + "&type=" + sensorType + "&pin=echo"
+    );
+    // check if sensorId is valid (-1 determines a "create new sensor" call)
+    if (sensorId != -1) {
+      $.ajax({
+        url: "/reqSensorConfig?id=" + sensorId + "&type=" + sensorType,
+        type: "get",
+        dataType: "json",
+        async: false,
+        cache: false,
+        context: this,
+        success: function (data) {
+          var modal = $(this);
+          modal.find("#modal_sensor_name").val(data.name);
+          modal.find("#modal_sensor_topic").val(data.topic);
+        },
+      });
+    }
+  }
+});
+
+/* click on save sensor button in edit window */
+$("#modal_sensor_btn_save").click(function () {
+  var modal = $("#sensor_modal");
+  var sensorName = modal.find("#modal_sensor_name").val();
+  var sensorTopic = modal.find("#modal_sensor_topic").val();
+  var sensorOffset = modal.find("#modal_sensor_offset").val();
+  var sensorId = modal.attr("sensor_id");
+  var sensorType = modal.attr("sensor_type");
+  if (sensorType == "OneWire") {
+    var sensorAddress = modal.find("#modal_sensor_address").val();
+    $.ajax({
+      url:
+        "/setSensor?id=" +
+        sensorId +
+        "&type=" +
+        sensorType +
+        "&name=" +
+        sensorName +
+        "&topic=" +
+        sensorTopic +
+        "&address=" +
+        sensorAddress +
+        "&sensorOffset=" +
+        sensorOffset,
+      type: "POST",
+      async: false,
+      cache: false,
+    });
+  } else if (sensorType == "PTSensor") {
+    var csPin = modal.find("#modal_sensor_cs_pin").val();
+    var numberOfWires = modal.find("#modal_sensor_number_of_wires").val();
+    $.ajax({
+      url:
+        "/setSensor?id=" +
+        sensorId +
+        "&type=" +
+        sensorType +
+        "&name=" +
+        sensorName +
+        "&topic=" +
+        sensorTopic +
+        "&cspin=" +
+        csPin +
+        "&numberOfWires=" +
+        numberOfWires +
+        "&sensorOffset=" +
+        sensorOffset,
+      type: "POST",
+      async: false,
+      cache: false,
+    });
+  } else if (sensorType == "Ultrasonic") {
+    var triggerPin = modal.find("#modal_sensor_trigger_pin").val();
+    var echoPin = modal.find("#modal_sensor_echo_pin").val();
+    $.ajax({
+      url:
+        "/setSensor?id=" +
+        sensorId +
+        "&type=" +
+        sensorType +
+        "&name=" +
+        sensorName +
+        "&topic=" +
+        sensorTopic +
+        "&triggerPin=" +
+        triggerPin +
+        "&echoPin=" +
+        echoPin,
+      type: "POST",
+      async: false,
+      cache: false,
+    });
+  }
+  modal.modal("hide");
+});
+
+/* click on delete sensor button in edit window */
+$("#modal_sensor_btn_delete").click(function () {
+  var modal = $("#sensor_modal");
+  var sensorId = modal.attr("sensor_id");
+  var sensorType = modal.attr("sensor_type");
+  $.ajax({
+    url: "/delSensor?id=" + sensorId + "&type=" + sensorType,
+    type: "POST",
+    async: false,
+    cache: false,
+  });
+  modal.modal("hide");
+});
+
+/* click on update OneWire sensor button in edit window */
+$("#modal_sensor_address_refresh").click(function () {
+  var modal = $("#sensor_modal");
+  var sensorId = modal.attr("sensor_id");
+  $("#modal_sensor_address").load("/reqSearchSensorAdresses?id=" + sensorId);
+});
+
+/* click on edit induction button */
+$("#induction_modal").on("show.bs.modal", function () {
+  var mqtttopic;
+  var isEnabled;
+  var pin_white;
+  var pin_blue;
+  var pin_yellow;
+  var delay;
+
+  $.ajax({
+    url: "/reqInductionConfig?req=isEnabled",
+    type: "get",
+    async: false,
+    cache: false,
+    success: function (data) {
+      isEnabled = data;
+    },
+  });
+  $.ajax({
+    url: "/reqInductionConfig?req=topic",
+    type: "get",
+    async: false,
+    cache: false,
+    success: function (data) {
+      mqtttopic = data;
+    },
+  });
+  $.ajax({
+    url: "/reqInductionConfig?req=delay",
+    type: "get",
+    async: false,
+    cache: false,
+    success: function (data) {
+      delay = data;
+    },
+  });
+
+  $("#modal_induction_pinwhite").load("/reqInductionConfig?req=pins&id=0");
+  $("#modal_induction_pinyellow").load("/reqInductionConfig?req=pins&id=1");
+  $("#modal_induction_pinblue").load("/reqInductionConfig?req=pins&id=2");
+
+  var modal = $(this);
+  modal.find("#modal_induction_script").val(mqtttopic);
+  modal.find("#modal_induction_delay").val(delay);
+  if (isEnabled == "1") {
+    modal.find("#modal_induction_enabled").prop("checked", true);
+  } else {
+    modal.find("#modal_induction_enabled").prop("checked", false);
+  }
+
+  var modal = $(this);
+});
+
+/* click on save induction button in edit window */
+$("#modal_induction_btn_save").click(function () {
+  var modal = $("#induction_modal");
+
+  var mqtttopic = modal.find("#modal_induction_script").val();
+  var pin_white = modal.find("#modal_induction_pinwhite").val();
+  var pin_blue = modal.find("#modal_induction_pinblue").val();
+  var pin_yellow = modal.find("#modal_induction_pinyellow").val();
+  var delay = modal.find("#modal_induction_delay").val();
+
+  if (modal.find("#modal_induction_enabled").prop("checked") == true) {
+    var isenabled = "1";
+  } else {
+    var isenabled = "0";
+  }
+
+  $.ajax({
+    url:
+      "/setIndu?enabled=" +
+      isenabled +
+      "&topic=" +
+      mqtttopic +
+      "&pinwhite=" +
+      pin_white +
+      "&pinyellow=" +
+      pin_yellow +
+      "&pinblue=" +
+      pin_blue +
+      "&delay=" +
+      delay,
+    type: "POST",
+    async: false,
+    cache: false,
+  });
+  modal.modal("hide");
+});
+
+/* click on "Configure Device" button */
+$("#config_modal").on("show.bs.modal", function () {
+  var modal = $(this);
+  $.ajax({
+    url: "/getSysConfig",
+    type: "get",
+    dataType: "json",
+    async: false,
+    cache: false,
+    success: function (data) {
+      modal.find("#modal_mqtt_address").val(data.mqttAddress);
+      if (data.useDisplay) {
+        modal.find("#modal_use_display").prop("checked", true);
+      } else {
+        modal.find("#modal_use_display").prop("checked", false);
+      }
+      modal.find("#modal_display_first_pin").html(data.firstDisplayPin);
+      modal.find("#modal_display_second_pin").html(data.secondDisplayPin);
+    },
+  });
+});
+
+/* click on "Save Changes" in "Configure Device" view */
+$("#modal_config_btn_save").click(function () {
+  var modal = $("#config_modal");
+
+  var mqttAddress = modal.find("#modal_mqtt_address").val();
+  var firstDisplayPin = modal.find("#modal_display_first_pin").val();
+  var secondDisplayPin = modal.find("#modal_display_second_pin").val();
+
+  if (modal.find("#modal_use_display").prop("checked") == true) {
+    var useDisplay = true;
+  } else {
+    var useDisplay = false;
+  }
+
+  $.ajax({
+    url:
+      "/setSysConfig?mqttAddress=" +
+      mqttAddress +
+      "&useDisplay=" +
+      useDisplay +
+      "&firstDisplayPin=" +
+      firstDisplayPin +
+      "&secondDisplayPin=" +
+      secondDisplayPin,
+    type: "POST",
+    async: false,
+    cache: false,
+  }).done(function (msg) {
+    modal.modal("hide");
+    alert(msg + "\n Page will be reloaded now!");
+    window.location.reload(true);
+  });
+});
+
+/* after initial loading is done, once get the firmware version */
+$.get("/version", function (data) {
+  $("#version").html("Firmware Device: " + data);
+});

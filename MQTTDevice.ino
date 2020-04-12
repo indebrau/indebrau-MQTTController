@@ -41,10 +41,10 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.0.5 (xx.xx.2020)";
+const String DEVICE_VERSION = "v1.1.0 (12.04.2020)";
 
-// default PINS (for initialization, can be configured via Web frontend, see also 99_PINMAP_WEMOS_D1Mini)
-const byte ONE_WIRE_BUS = D8;
+const byte ONE_WIRE_BUS = D8; // default PIN for initialization, in the future to be configured via Web frontend
+
 /*
  * Common pins across all PT100/1000 sensors: DI, DO, CLK.
  * When using multiple sensors, reuse these pins and only (re)define
@@ -52,11 +52,10 @@ const byte ONE_WIRE_BUS = D8;
 */
 const byte PT_PINS[3] = {D4, D3, D0};
 
-// ranges betwee 9 and 12, higher is better (and slower)
-const byte ONE_WIRE_RESOLUTION = 10;
-const float RREF = 430.0;       // 430.0 for PT100 and 4300.0 for PT1000
-const float RNOMINAL = 100.0;   // 100.0 for PT100, 1000.0 for PT1000
-const byte DEFAULT_CS_PIN = D1; // default pin for the CS of a PT sensor (placeholder)
+const byte ONE_WIRE_RESOLUTION = 10; // ranges betwee 9 and 12, higher is better (and slower)
+const float RREF = 430.0;            // 430.0 for PT100 and 4300.0 for PT1000
+const float RNOMINAL = 100.0;        // 100.0 for PT100, 1000.0 for PT1000
+const byte DEFAULT_CS_PIN = D1;      // default pin for the CS of a PT sensor (placeholder)
 
 // WiFi and MQTT
 const int WEB_SERVER_PORT = 80;
@@ -102,10 +101,9 @@ const byte PINS[NUMBER_OF_PINS] = {D0, D1, D2, D3, D4, D5, D6, D7, D8};
 const String PIN_NAMES[NUMBER_OF_PINS] = {"D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"};
 
 const byte NUMBER_OF_SENSORS_MAX = 6; // max number of sensors per type (if changed, please init accordingly!)
-const byte NUMBER_OF_ACTORS_MAX = 6;  // max number of actors
+const byte NUMBER_OF_ACTORS_MAX = 6;  // max number of actors (if changed, please init accordingly!)
 
 /*########## GLOBAL VARIABLES #########*/
-
 ESP8266WebServer server(WEB_SERVER_PORT);
 WiFiManager wifiManager;
 WiFiClient espClient;
@@ -122,7 +120,8 @@ int CMD[6][33] = {
     {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}  // P5
 };
 
-bool pins_used[17]; // careful here, these are not only the Wemos-numbered GIPO (D0-D8), but all of them!
+// careful here, these are not only the Wemos-numbered GIPO (D0-D8), but all of them (see also Pinmap)
+bool pins_used[17];
 
 byte numberOfOneWireSensors = 0;  // current number of OneWire sensors
 byte numberOfPTSensors = 0;       // current number of PT100 sensors

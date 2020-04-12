@@ -84,10 +84,10 @@ void setupServer()
   // search for OneWire sensors on the bus
   server.on("/reqSearchSensorAdresses", handleRequestOneWireSensorAddresses);
 
-  // returns the list of (named) currently free pins on this chip (takes a pt sensor id)
-  server.on("/reqSensorPins", handleRequestPtSensorPins);
+  // returns the list of (named) currently free pins on this chip (takes a sensor id, type and (optional) pin name)
+  server.on("/reqSensorPins", handleRequestSensorPins);
   // returns the list of (named) currently free pins on this chip (takes an actor id)
-  server.on("/reqActorPins", handleRequestPins);
+  server.on("/reqActorPins", handleRequestActorPins);
 
   // create or update sensor/actor/induction cooker
   server.on("/setSensor", handleSetSensor);
