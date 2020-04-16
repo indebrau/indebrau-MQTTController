@@ -113,7 +113,7 @@ bool loadConfig()
 
   // read distance sensors
   JsonArray &jsonDistanceSensors = json["DistanceSensors"];
-  numberOfDistanceSensors = jsonPTSensors.size();
+  numberOfDistanceSensors = jsonDistanceSensors.size();
   if (numberOfDistanceSensors > NUMBER_OF_SENSORS_MAX)
   {
     numberOfDistanceSensors = NUMBER_OF_SENSORS_MAX;
