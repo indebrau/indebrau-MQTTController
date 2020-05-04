@@ -6,7 +6,7 @@
 The Indebrau MQTTDevice is an Arduino sketch based on the ESP8266 to enable stable wireless communication between [CraftBeerPi V3](https://github.com/Manuel83/craftbeerpi3) with actors and sensors, based on the MQTT protocol.
 It is based on the "original" MQTTDevice project, started here [here](https://github.com/matschie1/MQTTDevice) and continued here [here](https://github.com/MQTTDevice/MQTTDevice).
 The main feature difference is the support of the more accurate (yet a little more expensive) PT100/1000 RTD sensors, using Adafruit's "Temperature Sensor Amplifier MAX31865" chip and library.
-Additinally, it is possible to use a JSN-SR04T 2.0 ultrasonic sensor for controling the fill level of a kettle, which works great together with [this CBPi plugin](https://github.com/indebrau/cbpi-LauteringAutomation).
+Additionally, it is possible to use a JSN-SR04T 2.0 ultrasonic sensor for controling the fill level of a kettle, which works great together with [this CBPi plugin](https://github.com/indebrau/cbpi-LauteringAutomation).
 
 ## Features
 * Sensors

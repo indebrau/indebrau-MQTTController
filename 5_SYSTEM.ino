@@ -39,7 +39,7 @@ void getOtherPins()
   if (useDisplay)
   {
     returnMessage = "Using a display. Pins for SDA and SCL are ";
-    returnMessage += PinToString(firstDisplayPin) + " and " + PinToString(secondDisplayPin);
+    returnMessage += PinToString(SDAPin) + " and " + PinToString(SCLPin);
     returnMessage += ". Showing the first sensor readings.<br>";
   }
   else
@@ -91,7 +91,7 @@ void getSysConfig()
   if (useDisplay)
   {
     firstPinMessage += F("<option>");
-    firstPinMessage += PinToString(firstDisplayPin);
+    firstPinMessage += PinToString(SDAPin);
     firstPinMessage += F("</option><option disabled>──────────</option>");
   }
   firstPinMessage += freePins;
@@ -100,7 +100,7 @@ void getSysConfig()
   if (useDisplay)
   {
     secondPinMessage += F("<option>");
-    secondPinMessage += PinToString(secondDisplayPin);
+    secondPinMessage += PinToString(SCLPin);
     secondPinMessage += F("</option><option disabled>──────────</option>");
   }
   secondPinMessage += freePins;
@@ -122,8 +122,8 @@ void setSysConfig()
   if (string_useDisplay == "true")
   {
     useDisplay = true;
-    firstDisplayPin = StringToPin(server.arg(2));
-    secondDisplayPin = StringToPin(server.arg(3));
+    SDAPin = StringToPin(server.arg(2));
+    SCLPin = StringToPin(server.arg(3));
   }
   else
   {

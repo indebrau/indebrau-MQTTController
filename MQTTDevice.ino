@@ -23,6 +23,8 @@
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
 
+#include <Adafruit_VL53L0X.h> // distance sensor
+
 #include <Adafruit_MAX31865.h> // PT100/1000
 
 #include <ESP8266WiFi.h>      // general WiFi functionality
@@ -74,7 +76,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // differentiate between the three currently supported sensor types
 const String SENSOR_TYPE_ONE_WIRE = "OneWire";
 const String SENSOR_TYPE_PT = "PTSensor";
-const String SENSOR_TYPE_ULTRASONIC = "Ultrasonic";
+const String SENSOR_TYPE_DISTANCE = "Distance";
 
 //  MQTT reconnect settings
 const byte MQTT_CONNECT_DELAY_SECONDS = 10;
@@ -125,7 +127,6 @@ bool pins_used[17];
 
 byte numberOfOneWireSensors = 0;  // current number of OneWire sensors
 byte numberOfPTSensors = 0;       // current number of PT100 sensors
-byte numberOfDistanceSensors = 0; // current number of distance sensors
 byte numberOfActors = 0;          // current number of actors
 
 OneWire oneWire(ONE_WIRE_BUS);
@@ -133,10 +134,12 @@ DallasTemperature DS18B20(&oneWire);
 byte oneWireAddressesFound[NUMBER_OF_SENSORS_MAX][8];
 byte numberOfOneWireSensorsFound = 0; // OneWire sensors found on the bus
 
-// if display is used, two pins are occupied (configured in Web frontend)
+// if display and/or Distance Sensor is used, two pins are occupied (configured in Web frontend)
 bool useDisplay = false;
-byte firstDisplayPin;
-byte secondDisplayPin;
+bool useDistanceSensor = false;
+Adafruit_VL53L0X distanceSensorChip = Adafruit_VL53L0X();
+byte SDAPin;
+byte SCLPin;
 
 char mqtthost[16] = ""; // mqtt server ip
 long mqttconnectlasttry;

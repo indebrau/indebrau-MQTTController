@@ -111,6 +111,7 @@ bool loadConfig()
     }
   }
 
+<<<<<<< HEAD
   // read distance sensors
   JsonArray &jsonDistanceSensors = json["DistanceSensors"];
   numberOfDistanceSensors = jsonDistanceSensors.size();
@@ -139,6 +140,8 @@ bool loadConfig()
     }
   }
 
+=======
+>>>>>>> ToF Sensor
   // Read induction
   JsonArray &jsinductions = json["induction"];
   JsonObject &jsinduction = jsinductions[0];
@@ -157,14 +160,23 @@ bool loadConfig()
 
   inductionCooker.change(StringToPin(pin_white), StringToPin(pin_yellow), StringToPin(pin_blue), js_mqtttopic, delayoff, is_enabled_bl);
 
-  //Read display
-  JsonObject &jsonDisplay = json["display"];
-  useDisplay = jsonDisplay["USEDISPLAY"];
-  if (useDisplay)
+  //Read display and distance sensor
+  JsonObject &jsonI2C = json["I2C"];
+  useDisplay = jsonI2C["USEDISPLAY"];
+  useDistanceSensor = jsonI2C["USEDISTANCESENSOR"];
+  if (useDisplay || useDistanceSensor)
   {
-    firstDisplayPin = StringToPin(jsonDisplay["FIRSTDISPLAYPIN"]);
-    secondDisplayPin = StringToPin(jsonDisplay["SECONDDISPLAYPIN"]);
+    SDAPin = StringToPin(jsonI2C["SDAPIN"]);
+    SCLPin = StringToPin(jsonI2C["SCLPIN"]);
+    if(useDistanceSensor){
+      String mqttTopic = jsonI2C["SENSORTOPIC"];
+      distanceSensor.change(mqttTopic);
+    }
   }
+  Serial.print("Display loaded: ");
+  Serial.println(useDisplay);
+  Serial.print("Distance sensor loaded: ");
+  Serial.println(useDistanceSensor);
 
   // Read MQTT host
   String json_mqtthost = json["MQTTHOST"];
@@ -218,17 +230,6 @@ bool saveConfig()
     jsonPTSensor["OFFSET"] = ptSensors[i].offset;
   }
 
-  // Write distance sensors
-  JsonArray &jsonDistanceSensors = json.createNestedArray("DistanceSensors");
-  for (int i = 0; i < numberOfDistanceSensors; i++)
-  {
-    JsonObject &jsonDistanceSensor = jsonDistanceSensors.createNestedObject();
-    jsonDistanceSensor["TRIGGERPIN"] = PinToString(distanceSensors[i].triggerPin);
-    jsonDistanceSensor["ECHOPIN"] = PinToString(distanceSensors[i].echoPin);
-    jsonDistanceSensor["NAME"] = distanceSensors[i].name;
-    jsonDistanceSensor["TOPIC"] = distanceSensors[i].mqttTopic;
-  }
-
   // Write induction
   JsonArray &jsinductions = json.createNestedArray("induction");
   JsonObject &jsinduction = jsinductions.createNestedObject();
@@ -247,12 +248,18 @@ bool saveConfig()
   jsinduction["DELAY"] = inductionCooker.delayAfteroff;
 
   // Write display usage
-  JsonObject &jDisplay = json.createNestedObject("display");
-  jDisplay["USEDISPLAY"] = useDisplay;
-  if (useDisplay)
+  JsonObject &jI2C = json.createNestedObject("I2C");
+  jI2C["USEDISPLAY"] = useDisplay;
+  jI2C["USEDISTANCESENSOR"] = useDistanceSensor;
+
+  
+  if (useDisplay || useDistanceSensor)
   {
-    jDisplay["FIRSTDISPLAYPIN"] = PinToString(firstDisplayPin);
-    jDisplay["SECONDDISPLAYPIN"] = PinToString(secondDisplayPin);
+    jI2C["SDAPIN"] = PinToString(SDAPin);
+    jI2C["SCLPIN"] = PinToString(SCLPin);
+    if(useDistanceSensor){
+      jI2C["SENSORTOPIC"] = distanceSensor.mqttTopic;
+    }
   }
 
   // Write MQTT host

@@ -1,7 +1,7 @@
-class induction
+class Induction
 {
 
-  unsigned long timeTurnedoff;
+  unsigned long timeTurnedOff;
 
   long timeOutCommand = 5000;  // TimeOut für Seriellen Befehl
   long timeOutReaction = 2000; // TimeOut für Induktionskochfeld
@@ -33,7 +33,7 @@ public:
   boolean isEnabled = false;
   long delayAfteroff = 120000;
 
-  induction()
+  Induction()
   {
     setupCommands();
   }
@@ -184,7 +184,7 @@ public:
 
     if (isInduon == false && isRelayon == true)
     { /* Relais ausschalten */
-      if (millis() > timeTurnedoff + delayAfteroff)
+      if (millis() > timeTurnedOff + delayAfteroff)
       {
         Serial.println("Turning Relay off");
         digitalWrite(PIN_WHITE, LOW);
@@ -248,14 +248,14 @@ public:
 
       power = newPower;
 
-      timeTurnedoff = 0;
+      timeTurnedOff = 0;
       isInduon = true;
       long difference = 0;
 
       if (power == 0)
       {
         CMD_CUR = 0;
-        timeTurnedoff = millis();
+        timeTurnedOff = millis();
         isInduon = false;
         difference = 0;
         goto setPowerLevel;
@@ -358,7 +358,7 @@ public:
   }
 }
 
-inductionCooker = induction();
+inductionCooker = Induction();
 
 void readInputWrap()
 {

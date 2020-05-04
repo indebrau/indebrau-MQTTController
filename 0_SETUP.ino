@@ -3,14 +3,14 @@ void setup()
   Serial.begin(115200);
   snprintf(deviceName, 25, "MQTTDevice-%08X", ESP.getChipId()); // Set device name
 
-  // Load spif file system
+  // load SPIF file system
   ESP.wdtFeed();
   if (!SPIFFS.begin())
   {
     Serial.println("SPIFFS Mount failed");
   }
 
-  // Load settings from config.json
+  // load settings from config.json
   ESP.wdtFeed();
   loadConfig();
 
@@ -18,6 +18,7 @@ void setup()
   if (numberOfOneWireSensors > 0)
   {
     pins_used[ONE_WIRE_BUS] = true;
+    DS18B20.begin();  // start OneWire sensors
   }
   if (numberOfPTSensors > 0)
   {
@@ -26,8 +27,6 @@ void setup()
     pins_used[PT_PINS[2]] = true;
   }
 
-  // Start sensors
-  DS18B20.begin();
 
   // WiFi Manager
   ESP.wdtFeed();
@@ -54,16 +53,27 @@ void setup()
   setupServer();
 
   // start display if applicable
-  if (useDisplay)
+  if (useDisplay || useDistanceSensor)
   {
-    pins_used[firstDisplayPin] = true;
-    pins_used[secondDisplayPin] = true;
-    Wire.begin(firstDisplayPin, secondDisplayPin); // SDA and SCL
-    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
-    { // Address 0x3C for 128x32
-      Serial.println(F("SSD1306 allocation failed"));
+    pins_used[SDAPin] = true;
+    pins_used[SCLPin] = true;
+    Wire.begin(SDAPin, SCLPin); // SDA and SCL
+
+    if (useDisplay) {
+      if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+      { // Address 0x3C for 128x32
+        Serial.println("Failed to start display");
+      }
+      drawDisplayContentError();
     }
-    drawDisplayContentError();
+    if (useDistanceSensor) {
+      if (!distanceSensorChip.begin()) {
+        Serial.println("Failed to start distance sensor");
+      }
+      else {
+        Serial.println("Started distance sensor");
+      }
+    }
   }
 }
 
@@ -84,7 +94,7 @@ void setupServer()
   // search for OneWire sensors on the bus
   server.on("/reqSearchSensorAdresses", handleRequestOneWireSensorAddresses);
 
-  // returns the list of (named) currently free pins on this chip (takes a sensor id, type and (optional) pin name)
+  // returns the list of (named) currently free pins on this chip (takes a sensor id and type)
   server.on("/reqSensorPins", handleRequestSensorPins);
   // returns the list of (named) currently free pins on this chip (takes an actor id)
   server.on("/reqActorPins", handleRequestActorPins);

@@ -209,72 +209,43 @@ class DistanceSensor
 {
 private:
   unsigned long lastCalled; // timestamp
-
+  
 public:
-  byte triggerPin; // set to some default
-  byte echoPin;    // set to default
   char mqttTopic[50];
-  String name; // just a name that is displayed (in frontend)
-  float value; // value to be send in cm
+  float value; // value to be send in mm
 
-  DistanceSensor(String triggerPin, String echoPin, String mqtttopic, String name)
+  DistanceSensor(String mqttTopic)
   {
-    Serial.print("Init sensor " + name);
-    change(triggerPin, echoPin, mqtttopic, name);
+    Serial.println("Init sensor " + mqttTopic);
+    change(mqttTopic);
   }
 
   void update()
   {
     if (millis() > (lastCalled + DEFAULT_SENSOR_UPDATE_INTERVAL))
     {
-      digitalWrite(triggerPin, HIGH);
-      delayMicroseconds(200); // wait between switching (more than enough)
-      digitalWrite(triggerPin, LOW);
-      value = pulseIn(echoPin, HIGH);
-      value = ((value * 0.034) / 2);
-
-      // sensor reads less than 25cm if disconnected or distance too close
-      // sensor reads very high values if too close (-> range 25 < x < 100)
-      if (value < 25 || value > 100)
-      {
+      VL53L0X_RangingMeasurementData_t measure;
+      distanceSensorChip.rangingTest(&measure, false);
+      if (measure.RangeStatus != 4) {  // phase failures have incorrect data
+        value = measure.RangeMilliMeter;
+        publishmqtt();
+      } else {
         value = -127.0;
-      }
-      else
-      {
-        publishmqtt(); // and send
       }
       lastCalled = millis();
     }
   }
 
-  void change(String newTriggerPin, String newEchoPin, String newMqttTopic, String newName)
+  void change(String newMqttTopic)
   {
     // check for initial empty array entry initialization
     // (no actual sensor defined in this call)
-    if (newTriggerPin != "")
+    if (newMqttTopic != "")
     {
-      byte byteNewTriggerPin = StringToPin(newTriggerPin);
-      byte byteNewEchoPin = StringToPin(newEchoPin);
-      // if these pins fit the bill, go for it..
-      if (isPin(byteNewTriggerPin) && isPin(byteNewEchoPin))
-      {
-        pins_used[triggerPin] = false;
-        pins_used[echoPin] = false;
-        triggerPin = byteNewTriggerPin;
-        echoPin = byteNewEchoPin;
-        pins_used[triggerPin] = true;
-        pins_used[echoPin] = true;
-
-        newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
-        name = newName;
-        pinMode(echoPin, INPUT);
-        pinMode(triggerPin, OUTPUT);
-        digitalWrite(echoPin, HIGH);
-        Serial.print("Starting distance sensor with trigger pin ");
-        Serial.print(PinToString(triggerPin));
-        Serial.print(" and echo pin ");
-        Serial.println(PinToString(echoPin));
-      }
+      useDistanceSensor = true;
+      newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
+      Serial.print("Starting distance sensor with topic ");
+      Serial.println(newMqttTopic);
     }
   }
 
@@ -315,13 +286,7 @@ PTSensor ptSensors[NUMBER_OF_SENSORS_MAX] = {
     PTSensor("", 0, "", "", 0),
     PTSensor("", 0, "", "", 0)};
 
-DistanceSensor distanceSensors[NUMBER_OF_SENSORS_MAX] = {
-    DistanceSensor("", "", "", ""),
-    DistanceSensor("", "", "", ""),
-    DistanceSensor("", "", "", ""),
-    DistanceSensor("", "", "", ""),
-    DistanceSensor("", "", "", ""),
-    DistanceSensor("", "", "", "")};
+DistanceSensor distanceSensor = DistanceSensor("");
 
 /* Called in loop() */
 void handleSensors()
@@ -336,10 +301,9 @@ void handleSensors()
     ptSensors[i].update();
     yield();
   }
-  for (int i = 0; i < numberOfDistanceSensors; i++)
+  if (useDistanceSensor)
   {
-    distanceSensors[i].update();
-    yield();
+    distanceSensor.update();
   }
 }
 
@@ -424,19 +388,10 @@ void handleSetSensor()
     float newOffset = server.arg(6).toFloat();
     ptSensors[id].change(newCsPin, newNumberOfWires, newTopic, newName, newOffset);
   }
-  else if (type == SENSOR_TYPE_ULTRASONIC)
+  else if (type == SENSOR_TYPE_DISTANCE)
   {
-    // means: create new sensor request
-    if (id == -1)
-    {
-      id = numberOfDistanceSensors;
-      numberOfDistanceSensors += 1;
-    }
-    String newName = server.arg(2);
-    String newTopic = server.arg(3);
-    String newTriggerPin = server.arg(4);
-    String newEchoPin = server.arg(5);
-    distanceSensors[id].change(newTriggerPin, newEchoPin, newTopic, newName);
+    String newTopic = server.arg(2);
+    distanceSensor.change(newTopic);
   }
   else
   {
@@ -493,22 +448,14 @@ void handleDelSensor()
       pins_used[PT_PINS[2]] = false;
     }
   }
-  else if (type == SENSOR_TYPE_ULTRASONIC)
+  else if (type == SENSOR_TYPE_DISTANCE)
   {
-    // first declare the pin unused
-    pins_used[distanceSensors[id].triggerPin] = false;
-    pins_used[distanceSensors[id].echoPin] = false;
-    // move all sensors following the given id one to the front of array,
-    // effectively overwriting the sensor to be deleted..
-    for (int i = id; i < numberOfDistanceSensors; i++)
-    {
-      String triggerPin = String(distanceSensors[i + 1].triggerPin); // yeah, not very nice or efficient..
-      String echoPin = String(distanceSensors[i + 1].echoPin);       // yeah, not very nice or efficient..
-      distanceSensors[i].change(triggerPin, echoPin, distanceSensors[i + 1].mqttTopic, distanceSensors[i + 1].name);
-      yield();
+    useDistanceSensor = false;
+    // if also display is not used, reboot to free i2c pins
+    if(!useDisplay){
+      saveConfig();
+      rebootDevice();
     }
-    // ..and declare the array's content to one sensor less
-    numberOfDistanceSensors -= 1;
   }
   else
   {
@@ -561,21 +508,11 @@ void handleRequestSensorPins()
     if (server.arg(1) == SENSOR_TYPE_PT)
     {
       message += PinToString(ptSensors[id].csPin);
+      message += F("</option><option disabled>──────────</option>");
+
     }
-    if (server.arg(1) == SENSOR_TYPE_ULTRASONIC)
-    {
-      if (server.arg(2) == "echo")
-      {
-        message += PinToString(distanceSensors[id].echoPin);
-      }
-      else if (server.arg(2) == "trigger")
-      {
-        message += PinToString(distanceSensors[id].triggerPin);
-      }
-    }
-    message += F("</option><option disabled>──────────</option>");
   }
-  // not add all free pins
+  // now add all free pins
   for (int i = 0; i < NUMBER_OF_PINS; i++)
   {
     if (pins_used[PINS[i]] == false)
@@ -638,22 +575,19 @@ void handleRequestSensors()
     sensorsResponse.add(sensorResponse);
     yield();
   }
-  for (int i = 0; i < numberOfDistanceSensors; i++)
+  if(useDistanceSensor)
   {
     JsonObject &sensorResponse = jsonBuffer.createObject();
-    sensorResponse["name"] = distanceSensors[i].name;
     // We reuse "OneWire Error Codes" here for simplicity
-    if (distanceSensors[i].value != -127.0)
+    if (distanceSensor.value != -127.0)
     {
-      sensorResponse["value"] = distanceSensors[i].getValueString();
+      sensorResponse["value"] = distanceSensor.getValueString();
     }
     else
     {
       sensorResponse["value"] = "ERR";
     }
-    sensorResponse["mqtt"] = distanceSensors[i].mqttTopic;
-    sensorResponse["type"] = SENSOR_TYPE_ULTRASONIC;
-    sensorResponse["id"] = i;
+    sensorResponse["mqtt"] = distanceSensor.mqttTopic;
     sensorsResponse.add(sensorResponse);
     yield();
   }
@@ -708,9 +642,9 @@ void handleRequestSensorConfig()
       server.send(200, "application/json", response);
     }
   }
-  else if (type == SENSOR_TYPE_ULTRASONIC)
+  else if (type == SENSOR_TYPE_DISTANCE)
   {
-    if (id == -1 || id > numberOfDistanceSensors)
+    if (!useDistanceSensor)
     {
       response = "not found";
       server.send(404, "text/plain", response);
@@ -719,10 +653,7 @@ void handleRequestSensorConfig()
     {
       StaticJsonBuffer<1024> jsonBuffer;
       JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["name"] = distanceSensors[id].name;
-      sensorJson["topic"] = distanceSensors[id].mqttTopic;
-      sensorJson["triggerPin"] = PinToString(distanceSensors[id].triggerPin);
-      sensorJson["echoPin"] = PinToString(distanceSensors[id].echoPin);
+      sensorJson["topic"] = distanceSensor.mqttTopic;
       sensorJson.printTo(response);
       server.send(200, "application/json", response);
     }
