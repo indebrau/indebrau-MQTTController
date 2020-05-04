@@ -111,37 +111,6 @@ bool loadConfig()
     }
   }
 
-<<<<<<< HEAD
-  // read distance sensors
-  JsonArray &jsonDistanceSensors = json["DistanceSensors"];
-  numberOfDistanceSensors = jsonDistanceSensors.size();
-  if (numberOfDistanceSensors > NUMBER_OF_SENSORS_MAX)
-  {
-    numberOfDistanceSensors = NUMBER_OF_SENSORS_MAX;
-  }
-  Serial.print("Number of distance sensors loaded: ");
-  Serial.println(numberOfDistanceSensors);
-
-  for (int i = 0; i < NUMBER_OF_SENSORS_MAX; i++)
-  {
-    if (i < numberOfDistanceSensors)
-    {
-      JsonObject &jsonDistanceSensor = jsonDistanceSensors[i];
-      String triggerPin = jsonDistanceSensor["TRIGGERPIN"];
-      String echoPin = jsonDistanceSensor["ECHOPIN"];
-      String topic = jsonDistanceSensor["TOPIC"];
-      String name = jsonDistanceSensor["NAME"];
-
-      distanceSensors[i].change(triggerPin, echoPin, topic, name);
-    }
-    else
-    {
-      distanceSensors[i].change("", "", "", "");
-    }
-  }
-
-=======
->>>>>>> ToF Sensor
   // Read induction
   JsonArray &jsinductions = json["induction"];
   JsonObject &jsinduction = jsinductions[0];
@@ -168,7 +137,8 @@ bool loadConfig()
   {
     SDAPin = StringToPin(jsonI2C["SDAPIN"]);
     SCLPin = StringToPin(jsonI2C["SCLPIN"]);
-    if(useDistanceSensor){
+    if (useDistanceSensor)
+    {
       String mqttTopic = jsonI2C["SENSORTOPIC"];
       distanceSensor.change(mqttTopic);
     }
@@ -247,17 +217,17 @@ bool saveConfig()
   jsinduction["TOPIC"] = inductionCooker.mqtttopic;
   jsinduction["DELAY"] = inductionCooker.delayAfteroff;
 
-  // Write display usage
+  // Write display and distance sensor
   JsonObject &jI2C = json.createNestedObject("I2C");
   jI2C["USEDISPLAY"] = useDisplay;
   jI2C["USEDISTANCESENSOR"] = useDistanceSensor;
 
-  
   if (useDisplay || useDistanceSensor)
   {
     jI2C["SDAPIN"] = PinToString(SDAPin);
     jI2C["SCLPIN"] = PinToString(SCLPin);
-    if(useDistanceSensor){
+    if (useDistanceSensor)
+    {
       jI2C["SENSORTOPIC"] = distanceSensor.mqttTopic;
     }
   }
