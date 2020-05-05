@@ -43,7 +43,7 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.1.0 (12.04.2020)";
+const String DEVICE_VERSION = "v1.2.0 (xx.05.2020)";
 
 const byte ONE_WIRE_BUS = D8; // default PIN for initialization, in the future to be configured via Web frontend
 
@@ -125,9 +125,9 @@ int CMD[6][33] = {
 // careful here, these are not only the Wemos-numbered GIPO (D0-D8), but all of them (see also Pinmap)
 bool pins_used[17];
 
-byte numberOfOneWireSensors = 0;  // current number of OneWire sensors
-byte numberOfPTSensors = 0;       // current number of PT100 sensors
-byte numberOfActors = 0;          // current number of actors
+byte numberOfOneWireSensors = 0; // current number of OneWire sensors
+byte numberOfPTSensors = 0;      // current number of PT100 sensors
+byte numberOfActors = 0;         // current number of actors
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);

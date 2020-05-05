@@ -7,7 +7,7 @@ void setup()
   ESP.wdtFeed();
   if (!SPIFFS.begin())
   {
-    Serial.println("SPIFFS Mount failed");
+    Serial.println("SPIFFS mount failed");
   }
 
   // load settings from config.json
@@ -18,7 +18,7 @@ void setup()
   if (numberOfOneWireSensors > 0)
   {
     pins_used[ONE_WIRE_BUS] = true;
-    DS18B20.begin();  // start OneWire sensors
+    DS18B20.begin(); // start OneWire sensors
   }
   if (numberOfPTSensors > 0)
   {
@@ -26,7 +26,6 @@ void setup()
     pins_used[PT_PINS[1]] = true;
     pins_used[PT_PINS[2]] = true;
   }
-
 
   // WiFi Manager
   ESP.wdtFeed();
@@ -52,25 +51,33 @@ void setup()
   ESP.wdtFeed();
   setupServer();
 
-  // start display if applicable
+  // start i2c if applicable
   if (useDisplay || useDistanceSensor)
   {
     pins_used[SDAPin] = true;
     pins_used[SCLPin] = true;
     Wire.begin(SDAPin, SCLPin); // SDA and SCL
 
-    if (useDisplay) {
+    if (useDisplay)
+    {
       if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
-      { // Address 0x3C for 128x32
+      {
         Serial.println("Failed to start display");
       }
-      drawDisplayContentError();
+      else
+      {
+        Serial.println("Started display");
+        drawDisplayContentError();
+      }
     }
-    if (useDistanceSensor) {
-      if (!distanceSensorChip.begin()) {
+    if (useDistanceSensor)
+    {
+      if (!distanceSensorChip.begin())
+      {
         Serial.println("Failed to start distance sensor");
       }
-      else {
+      else
+      {
         Serial.println("Started distance sensor");
       }
     }

@@ -1,6 +1,5 @@
 class Induction
 {
-
   unsigned long timeTurnedOff;
 
   long timeOutCommand = 5000;  // TimeOut für Seriellen Befehl
@@ -13,7 +12,6 @@ class Induction
   bool isError = false;
   byte error = 0;
 
-  //int storePower = 0;
   long powerSampletime = 20000;
   unsigned long powerLast;
   long powerHigh = powerSampletime; // Dauer des "HIGH"-Anteils im Schaltzyklus
@@ -95,7 +93,6 @@ public:
       if (isPin(PIN_INTERRUPT))
       {
         pinMode(PIN_INTERRUPT, INPUT_PULLUP);
-        //attachInterrupt(digitalPinToInterrupt(PIN_INTERRUPT), readInputWrap, CHANGE);
         pins_used[PIN_INTERRUPT] = true;
       }
       if (client.connected())
@@ -314,7 +311,7 @@ public:
 
       if (ishigh)
       {
-        lastInterrupt = newInterrupt; // PIN ist auf Rising, Bit senden hat gestartet :)
+        lastInterrupt = newInterrupt; // PIN ist auf Rising, Bit senden hat gestartet
       }
       else
       { // Bit ist auf Falling, Bit Übertragung fertig. Auswerten.
@@ -348,7 +345,6 @@ public:
           { // Aufnahme vorbei.
 
             /* von Vorne */
-            //timeLastReaction = millis();
             inputCurrent = 0;
             inputStarted = false;
           }

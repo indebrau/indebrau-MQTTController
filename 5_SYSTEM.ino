@@ -36,15 +36,26 @@ void getMqttStatus()
 void getOtherPins()
 {
   String returnMessage;
-  if (useDisplay)
+  if (useDisplay || useDistanceSensor)
   {
-    returnMessage = "Using a display. Pins for SDA and SCL are ";
-    returnMessage += PinToString(SDAPin) + " and " + PinToString(SCLPin);
-    returnMessage += ". Showing the first sensor readings.<br>";
+    returnMessage = "I2C configured. Pins for SDA and SCL are ";
+    returnMessage += PinToString(SDAPin) + " and " + PinToString(SCLPin) + ".<br>";
+    if (useDisplay)
+    {
+      returnMessage += "Showing the first sensor readings on a display.<br>";
+    }
+    if (useDistanceSensor)
+    {
+      returnMessage += "Using a distance sensor.<br>";
+    }
+    else
+    {
+      returnMessage += "<br>";
+    }
   }
   else
   {
-    returnMessage = "Not using a display.<br>";
+    returnMessage = "Not using I2C.<br>";
   }
   if (numberOfPTSensors > 0)
   {

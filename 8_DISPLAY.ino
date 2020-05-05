@@ -10,26 +10,58 @@ void drawDisplayContent(void)
     // PT sensor has priority
     if (numberOfPTSensors > 0)
     {
-      dtostrf(ptSensors[0].value, 2, 2, buf);
+      if (ptSensors[0].value == -127.0)
+      {
+        display.setTextSize(2);
+        display.print("Bad Value!");
+      }
+      else
+      {
+        dtostrf(ptSensors[0].value, 2, 2, buf);
+        display.print(buf);
+        display.setTextSize(1);
+        display.print(" ");
+        display.setTextSize(2);
+        display.write(247); // deg symbol
+        display.setTextSize(3);
+        display.print("C");
+      }
     }
     else if (numberOfOneWireSensors > 0)
     {
-      dtostrf(oneWireSensors[0].value, 2, 2, buf);
+      if (oneWireSensors[0].value == -127.0)
+      {
+        display.setTextSize(2);
+        display.print("Bad Value!");
+      }
+      else
+      {
+        dtostrf(oneWireSensors[0].value, 2, 2, buf);
+        display.print(buf);
+        display.setTextSize(1);
+        display.print(" ");
+        display.setTextSize(2);
+        display.write(247); // deg symbol
+        display.setTextSize(3);
+        display.print("C");
+      }
     }
-    else
+    else if (useDistanceSensor)
     {
-      buf[0] = 0;
-    }
-
-    if (buf[0] != 0)
-    { // sensor found
-      display.print(buf);
-      display.setTextSize(1);
-      display.print(" ");
-      display.setTextSize(2);
-      display.write(247); // deg symbol
-      display.setTextSize(3);
-      display.print("C");
+      if (distanceSensor.value == -127.0)
+      {
+        display.setTextSize(2);
+        display.print("Bad Value!");
+      }
+      else
+      {
+        dtostrf(distanceSensor.value, 2, 1, buf);
+        display.print(buf);
+        display.setTextSize(1);
+        display.print(" ");
+        display.setTextSize(3);
+        display.print("cm");
+      }
     }
     else
     {

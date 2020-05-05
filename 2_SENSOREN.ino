@@ -209,10 +209,10 @@ class DistanceSensor
 {
 private:
   unsigned long lastCalled; // timestamp
-  
+
 public:
   char mqttTopic[50];
-  float value; // value to be send in mm
+  float value; // value to be send in cm
 
   DistanceSensor(String mqttTopic)
   {
@@ -226,10 +226,14 @@ public:
     {
       VL53L0X_RangingMeasurementData_t measure;
       distanceSensorChip.rangingTest(&measure, false);
-      if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-        value = measure.RangeMilliMeter;
+      // Range between 0 and 800 millimeter is more or less accurate
+      if (measure.RangeStatus != 4 && measure.RangeMilliMeter < 800)
+      {
+        value = measure.RangeMilliMeter / 10.0;
         publishmqtt();
-      } else {
+      }
+      else
+      {
         value = -127.0;
       }
       lastCalled = millis();
@@ -452,7 +456,8 @@ void handleDelSensor()
   {
     useDistanceSensor = false;
     // if also display is not used, reboot to free i2c pins
-    if(!useDisplay){
+    if (!useDisplay)
+    {
       saveConfig();
       rebootDevice();
     }
@@ -509,7 +514,6 @@ void handleRequestSensorPins()
     {
       message += PinToString(ptSensors[id].csPin);
       message += F("</option><option disabled>──────────</option>");
-
     }
   }
   // now add all free pins
@@ -575,7 +579,7 @@ void handleRequestSensors()
     sensorsResponse.add(sensorResponse);
     yield();
   }
-  if(useDistanceSensor)
+  if (useDistanceSensor)
   {
     JsonObject &sensorResponse = jsonBuffer.createObject();
     // We reuse "OneWire Error Codes" here for simplicity
