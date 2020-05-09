@@ -72,7 +72,7 @@ bool loadFromSpiffs(String path)
 
 void mqttreconnect()
 {
-  // Wenn Client nicht verbunden, Verbindung herstellen
+  // try to connect, if client is not yet connected
   if (!client.connected())
   {
     // Delay prüfen
@@ -113,16 +113,6 @@ Subscribe:
 
 void mqttcallback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.println("Received MQTT");
-  Serial.print("Topic: ");
-  Serial.println(topic);
-  Serial.print("Payload: ");
-
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println(" ");
   char payload_msg[length];
   for (int i = 0; i < length; i++)
   {
@@ -131,15 +121,12 @@ void mqttcallback(char *topic, byte *payload, unsigned int length)
 
   if (inductionCooker.mqtttopic == topic)
   {
-    Serial.println("passing mqtt to induction");
     inductionCooker.handlemqtt(payload_msg);
   }
   for (int i = 0; i < numberOfActors; i++)
   {
     if (actors[i].argument_actor == topic)
     {
-      Serial.print("passing mqtt to actor ");
-      Serial.println(actors[i].name_actor);
       actors[i].handlemqtt(payload_msg);
     }
     yield();

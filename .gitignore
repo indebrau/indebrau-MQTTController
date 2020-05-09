@@ -4,3 +4,5 @@
 spiffs.image
 /data/config.json
 .vscode/settings.json
+data/.vscode/arduino.json
+data/.vscode/c_cpp_properties.json

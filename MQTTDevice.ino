@@ -8,7 +8,7 @@
  * - Control of GGM Induction cooker IDS2 (emulates original control device)
  * - DS18B20 sensors
  * - PT100/1000 sensors (using the Adafruit max31865 amplifier and library)
- * - Distance sensors (useful for measuring fill levels, to automate your lautering)
+ * - Distance sensor (useful for measuring fill levels, to automate your lautering)
  * - GIPO controlled actors with emulated PWM
  * - OverTheAir firmware updates
  *
@@ -43,7 +43,7 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.2.0 (xx.05.2020)";
+const String DEVICE_VERSION = "v1.2.0 (09.05.2020)";
 
 const byte ONE_WIRE_BUS = D8; // default PIN for initialization, in the future to be configured via Web frontend
 
@@ -66,7 +66,7 @@ const int MQTT_SERVER_PORT = 1883;
 const byte ACCESS_POINT_MODE_TIMEOUT = 20;       // in seconds, device restarts if no one connected to AP during this time
 const char AP_PASSPHRASE[16] = "indebrau";       // passphrase to access the Wifi access point
 const int UPDATE = 500;                          // how often should the system update state ("call all routines")
-const int DEFAULT_SENSOR_UPDATE_INTERVAL = 2000; // how often should sensors provide new readings (>= UPDATE)
+const int DEFAULT_SENSOR_UPDATE_INTERVAL = 1000; // how often should sensors provide new readings (>= UPDATE)
 
 // display
 const byte SCREEN_WIDTH = 128; // display width, in pixels

@@ -36,27 +36,6 @@ void getMqttStatus()
 void getOtherPins()
 {
   String returnMessage;
-  if (useDisplay || useDistanceSensor)
-  {
-    returnMessage = "I2C configured. Pins for SDA and SCL are ";
-    returnMessage += PinToString(SDAPin) + " and " + PinToString(SCLPin) + ".<br>";
-    if (useDisplay)
-    {
-      returnMessage += "Showing the first sensor readings on a display.<br>";
-    }
-    if (useDistanceSensor)
-    {
-      returnMessage += "Using a distance sensor.<br>";
-    }
-    else
-    {
-      returnMessage += "<br>";
-    }
-  }
-  else
-  {
-    returnMessage = "Not using I2C.<br>";
-  }
   if (numberOfPTSensors > 0)
   {
     returnMessage += "Using PT sensors. Pins for  DI, DO and CLK are ";
@@ -97,28 +76,28 @@ void getSysConfig()
     }
     yield();
   }
-  // first pin message
-  String firstPinMessage = "";
-  if (useDisplay)
-  {
-    firstPinMessage += F("<option>");
-    firstPinMessage += PinToString(SDAPin);
-    firstPinMessage += F("</option><option disabled>──────────</option>");
-  }
-  firstPinMessage += freePins;
-  // second pin message
-  String secondPinMessage = "";
-  if (useDisplay)
-  {
-    secondPinMessage += F("<option>");
-    secondPinMessage += PinToString(SCLPin);
-    secondPinMessage += F("</option><option disabled>──────────</option>");
-  }
-  secondPinMessage += freePins;
 
-  // now add both to json
-  config["firstDisplayPin"] = firstPinMessage;
-  config["secondDisplayPin"] = secondPinMessage;
+  String SDAPinMessage = "";
+  if (useDisplay || useDistanceSensor)
+  {
+    SDAPinMessage += F("<option>");
+    SDAPinMessage += PinToString(SDAPin);
+    SDAPinMessage += F("</option><option disabled>──────────</option>");
+  }
+  SDAPinMessage += freePins;
+
+  String SCLPinMessage = "";
+  if (useDisplay || useDistanceSensor)
+  {
+    SCLPinMessage += F("<option>");
+    SCLPinMessage += PinToString(SCLPin);
+    SCLPinMessage += F("</option><option disabled>──────────</option>");
+  }
+  SCLPinMessage += freePins;
+
+  // add both to json
+  config["SDAPin"] = SDAPinMessage;
+  config["SCLPin"] = SCLPinMessage;
 
   String response;
   config.printTo(response);
@@ -130,11 +109,11 @@ void setSysConfig()
   String string_mqtthost = server.arg(0);
   string_mqtthost.toCharArray(mqtthost, 16);
   String string_useDisplay = server.arg(1);
+  SDAPin = StringToPin(server.arg(2));
+  SCLPin = StringToPin(server.arg(3));
   if (string_useDisplay == "true")
   {
     useDisplay = true;
-    SDAPin = StringToPin(server.arg(2));
-    SCLPin = StringToPin(server.arg(3));
   }
   else
   {

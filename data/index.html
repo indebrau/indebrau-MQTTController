@@ -9,14 +9,14 @@
   <link rel="stylesheet" href="theme.css" type="text/css">
 </head>
 
-<body onload="setInterval(refresh, 3000)">
+<body onload="setInterval(refresh, 2000)">
 
   <!-- Header -->
   <div class="py-2">
     <div class="container">
       <div class="row">
         <div class="col">
-          <h1 class="text-center">Indebrau MQTT Device v1.1.0</h1>
+          <h1 class="text-center">Indebrau MQTT Device v1.2.0</h1>
           <button type="button" class="btn btn-outline-primary" data-target="#config_modal"
             data-toggle="modal">Configure Device</button>
           <a href="config.json" download="config.json" class="btn btn-outline-primary" id="btn_downloadConfig">Download
@@ -40,7 +40,7 @@
                 <a href="" class="badge badge-warning" data-target="#sensor_modal" data-toggle="modal" data-id="-1"
                   data-type="PTSensor"> Add PT </a>
                 <a href="" class="badge badge-warning" data-target="#sensor_modal" data-toggle="modal" data-id="-1"
-                  data-type="Ultrasonic"> Add Ultrasonic </a>
+                  data-type="Distance"> Add Distance Sensor </a>
               </div>
             </div>
             <div class="card-body">
@@ -121,10 +121,6 @@
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label for="modal_actor_name">Name</label>
-            <input type="text" class="form-control" placeholder="" id="modal_actor_name">
-          </div>
-          <div class="form-group">
             <label for="modal_actor_script">MQTT Topic</label>
             <input type="text" class="form-control" placeholder="" id="modal_actor_script">
           </div>
@@ -184,17 +180,6 @@
                 <label for="modal_sensor_offset">Sensor Offset</label>
                 <input type="number" step="0.01" class="form-control" placeholder="0" id="modal_sensor_offset">
               </div>
-            </div>
-            <div id="modal_sensor_ultrasonic_sensor">
-              <label for="modal_sensor_trigger_pin">Trigger and Echo Pin</label>
-              <div class="input-group">
-                <select class="form-control" id="modal_sensor_trigger_pin"></select>
-                <select class="form-control" id="modal_sensor_echo_pin"></select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="modal_sensor_name">Name </label>
-              <input type="text" class="form-control" placeholder="" id="modal_sensor_name">
             </div>
             <div class="form-group">
               <label for="modal_sensor_topic">MQTT Topic</label>
@@ -264,19 +249,19 @@
             <label for="modal_mqtt_address">MQTT Server Address</label>
             <input type="text" class="form-control" placeholder="" id="modal_mqtt_address">
           </div>
+          <div class="form-group">
+            <label for="modal_SDA_pin">SDA Pin</label>
+            <select class="form-control" id="modal_SDA_pin">
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modal_SCL_pin">SCL Pin</label>
+            <select class="form-control" id="modal_SCL_pin">
+            </select>
+          </div>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="modal_use_display">
             <label for="modal_use_display">Use Display</label>
-          </div>
-          <div class="form-group">
-            <label for="modal_display_first_pin">Display Pin 1</label>
-            <select class="form-control" id="modal_display_first_pin">
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="modal_display_second_pin">Display Pin 2</label>
-            <select class="form-control" id="modal_display_second_pin">
-            </select>
           </div>
         </div>
         <div class="modal-footer">

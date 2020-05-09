@@ -11,26 +11,30 @@ function refresh() {
     data.forEach(function (element) {
       let sensor =
         "<li class='list-group-item justify-content-between align-items-center d-flex'> ";
-      sensor += element.name;
       sensor += "<span class='badge badge-light'> ";
       if (element.value === "ERR") {
         sensor += "Error";
       } else {
         if (element.type === "PTSensor" || element.type === "OneWire") {
           sensor += element.value + "°C";
-        } else if (element.type === "Ultrasonic") {
+        } else if (element.type === "Distance") {
           sensor += element.value + " cm";
         } else {
           sensor += element.value + " unknown unit";
         }
       }
       sensor += " </span> <span class='badge badge-info'> ";
-      sensor += element.type;
-      sensor += " </span> <span class='badge badge-info'> ";
       sensor += element.mqtt;
+      sensor += " </span> <span class='badge badge-info'> ";
+      sensor += element.type;
+
       sensor +=
         " </span> <a href='' class='badge badge-warning' data-toggle='modal' data-target='#sensor_modal' data-id='";
-      sensor += element.id;
+      if (element.type === "PTSensor" || element.type === "OneWire") {
+        sensor += element.id;
+      } else if (element.type === "Distance") {
+        sensor += 1; // CONVENTION: means: sensor exists
+      }
       sensor += "' data-type='";
       sensor += element.type;
       sensor += "'> Edit </a> </li>";
@@ -43,9 +47,7 @@ function refresh() {
     data.forEach(function (element, index) {
       let actor =
         "<li class='list-group-item d-flex justify-content-between align-items-center'> ";
-      actor += element.name;
       actor += " </span> <span class='badge";
-      // is actor "on"
       if (element.status == true) {
         actor += "badge-success'> ON:";
         actor += element.power;
@@ -94,21 +96,10 @@ function refresh() {
 $("#actor_modal").on("show.bs.modal", function (event) {
   var button = $(event.relatedTarget);
   var actorid = button.data("id");
-  var actorname;
   var actorscript;
-  var actorpin;
   var actorinverted;
   $.ajax({
-    url: "/reqActorConfig?id=" + actorid + "&req=name",
-    type: "get",
-    async: false,
-    cache: false,
-    success: function (data) {
-      actorname = data;
-    },
-  });
-  $.ajax({
-    url: "/reqActorConfig?id=" + actorid + "&req=script",
+    url: `/reqActorConfig?id=${actorid}&req=script`,
     type: "get",
     async: false,
     cache: false,
@@ -117,7 +108,7 @@ $("#actor_modal").on("show.bs.modal", function (event) {
     },
   });
   $.ajax({
-    url: "/reqActorConfig?id=" + actorid + "&req=inverted",
+    url: `/reqActorConfig?id=${actorid}&req=inverted`,
     type: "get",
     async: false,
     cache: false,
@@ -127,7 +118,6 @@ $("#actor_modal").on("show.bs.modal", function (event) {
   });
   var modal = $(this);
   modal.attr("actor_id", actorid);
-  modal.find("#modal_actor_name").val(actorname);
   modal.find("#modal_actor_script").val(actorscript);
   $("#modal_actor_pin").load("/reqActorPins?id=" + actorid);
   if (actorinverted == "1") {
@@ -140,7 +130,6 @@ $("#actor_modal").on("show.bs.modal", function (event) {
 /* click on save actor button in edit window */
 $("#modal_actor_btn_save").click(function () {
   var modal = $("#actor_modal");
-  var actorname = modal.find("#modal_actor_name").val();
   var actorscript = modal.find("#modal_actor_script").val();
   var actorpin = modal.find("#modal_actor_pin").val();
   if (modal.find("#modal_actor_inverted").prop("checked") == true) {
@@ -150,17 +139,7 @@ $("#modal_actor_btn_save").click(function () {
   }
   var actorid = modal.attr("actor_id");
   $.ajax({
-    url:
-      "/setActor?id=" +
-      actorid +
-      "&name=" +
-      actorname +
-      "&script=" +
-      actorscript +
-      "&pin=" +
-      actorpin +
-      "&inverted=" +
-      actorinverted,
+    url: `/setActor?id=${actorid}&script=${actorscript}&pin=${actorpin}&inverted=${actorinverted}`,
     type: "POST",
     async: false,
     cache: false,
@@ -192,14 +171,12 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
   modal.attr("sensor_type", sensorType);
   // reset fields for new sensor creation request
   if (sensorId == -1) {
-    modal.find("#modal_sensor_name").val("");
     modal.find("#modal_sensor_topic").val("");
     modal.find("#modal_sensor_offset").val("");
   }
   if (sensorType == "OneWire") {
     // ui adjustments
     $("#modal_sensor_one_wire_sensor").show();
-    $("#modal_sensor_ultrasonic_sensor").hide();
     $("#modal_sensor_pt_sensor").hide();
     // get available addresses
     $("#modal_sensor_address").load("/reqSearchSensorAdresses?id=" + sensorId);
@@ -213,7 +190,6 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
         context: this,
         success: function (data) {
           var modal = $(this);
-          modal.find("#modal_sensor_name").val(data.name);
           modal.find("#modal_sensor_topic").val(data.topic);
           modal.find("#modal_sensor_offset").val(data.offset);
         },
@@ -222,7 +198,6 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
   } else if (sensorType == "PTSensor") {
     // ui adjustments
     $("#modal_sensor_one_wire_sensor").hide();
-    $("#modal_sensor_ultrasonic_sensor").hide();
     $("#modal_sensor_pt_sensor").show();
     // load pins
     $("#modal_sensor_cs_pin").load(
@@ -239,24 +214,16 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
         context: this,
         success: function (data) {
           var modal = $(this);
-          modal.find("#modal_sensor_name").val(data.name);
           modal.find("#modal_sensor_topic").val(data.topic);
           modal.find("#modal_sensor_offset").val(data.offset);
           modal.find("#modal_sensor_number_of_wires").val(data.numberOfWires);
         },
       });
     }
-  } else if (sensorType == "Ultrasonic") {
+  } else if (sensorType == "Distance") {
     // ui adjustments
     $("#modal_sensor_one_wire_sensor").hide();
     $("#modal_sensor_pt_sensor").hide();
-    $("#modal_sensor_ultrasonic_sensor").show();
-    $("#modal_sensor_trigger_pin").load(
-      "/reqSensorPins?id=" + sensorId + "&type=" + sensorType + "&pin=trigger"
-    );
-    $("#modal_sensor_echo_pin").load(
-      "/reqSensorPins?id=" + sensorId + "&type=" + sensorType + "&pin=echo"
-    );
     // check if sensorId is valid (-1 determines a "create new sensor" call)
     if (sensorId != -1) {
       $.ajax({
@@ -268,7 +235,6 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
         context: this,
         success: function (data) {
           var modal = $(this);
-          modal.find("#modal_sensor_name").val(data.name);
           modal.find("#modal_sensor_topic").val(data.topic);
         },
       });
@@ -279,7 +245,6 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
 /* click on save sensor button in edit window */
 $("#modal_sensor_btn_save").click(function () {
   var modal = $("#sensor_modal");
-  var sensorName = modal.find("#modal_sensor_name").val();
   var sensorTopic = modal.find("#modal_sensor_topic").val();
   var sensorOffset = modal.find("#modal_sensor_offset").val();
   var sensorId = modal.attr("sensor_id");
@@ -288,18 +253,8 @@ $("#modal_sensor_btn_save").click(function () {
     var sensorAddress = modal.find("#modal_sensor_address").val();
     $.ajax({
       url:
-        "/setSensor?id=" +
-        sensorId +
-        "&type=" +
-        sensorType +
-        "&name=" +
-        sensorName +
-        "&topic=" +
-        sensorTopic +
-        "&address=" +
-        sensorAddress +
-        "&sensorOffset=" +
-        sensorOffset,
+        `/setSensor?type=${sensorType}&topic=${sensorTopic}&id=${sensorId}` +
+        `&address=${sensorAddress}&sensorOffset=${sensorOffset}`,
       type: "POST",
       async: false,
       cache: false,
@@ -309,44 +264,24 @@ $("#modal_sensor_btn_save").click(function () {
     var numberOfWires = modal.find("#modal_sensor_number_of_wires").val();
     $.ajax({
       url:
-        "/setSensor?id=" +
-        sensorId +
-        "&type=" +
-        sensorType +
-        "&name=" +
-        sensorName +
-        "&topic=" +
-        sensorTopic +
-        "&cspin=" +
-        csPin +
-        "&numberOfWires=" +
-        numberOfWires +
-        "&sensorOffset=" +
-        sensorOffset,
+        `/setSensor?type=${sensorType}&topic=${sensorTopic}` +
+        `&id=${sensorId}&cspin=${csPin}&numberOfWires=${numberOfWires}&sensorOffset=${sensorOffset}`,
       type: "POST",
       async: false,
       cache: false,
     });
-  } else if (sensorType == "Ultrasonic") {
-    var triggerPin = modal.find("#modal_sensor_trigger_pin").val();
-    var echoPin = modal.find("#modal_sensor_echo_pin").val();
+  } else if (sensorType == "Distance") {
     $.ajax({
-      url:
-        "/setSensor?id=" +
-        sensorId +
-        "&type=" +
-        sensorType +
-        "&name=" +
-        sensorName +
-        "&topic=" +
-        sensorTopic +
-        "&triggerPin=" +
-        triggerPin +
-        "&echoPin=" +
-        echoPin,
+      url: `/setSensor?type=${sensorType}&topic=${sensorTopic}`,
       type: "POST",
       async: false,
       cache: false,
+    }).done(function (msg) {
+      if (sensorId == -1) {
+        modal.modal("hide");
+        alert(msg + "\n Page will reloaded now!");
+        window.location.reload(true);
+      }
     });
   }
   modal.modal("hide");
@@ -377,9 +312,6 @@ $("#modal_sensor_address_refresh").click(function () {
 $("#induction_modal").on("show.bs.modal", function () {
   var mqtttopic;
   var isEnabled;
-  var pin_white;
-  var pin_blue;
-  var pin_yellow;
   var delay;
 
   $.ajax({
@@ -422,7 +354,6 @@ $("#induction_modal").on("show.bs.modal", function () {
   } else {
     modal.find("#modal_induction_enabled").prop("checked", false);
   }
-
   var modal = $(this);
 });
 
@@ -444,18 +375,8 @@ $("#modal_induction_btn_save").click(function () {
 
   $.ajax({
     url:
-      "/setIndu?enabled=" +
-      isenabled +
-      "&topic=" +
-      mqtttopic +
-      "&pinwhite=" +
-      pin_white +
-      "&pinyellow=" +
-      pin_yellow +
-      "&pinblue=" +
-      pin_blue +
-      "&delay=" +
-      delay,
+      `/setIndu?enabled=${isenabled}&topic=${mqtttopic}&pinwhite=${pin_white}` +
+      `&pinyellow=${pin_yellow}&pinblue=${pin_blue}&delay=${delay}`,
     type: "POST",
     async: false,
     cache: false,
@@ -479,8 +400,8 @@ $("#config_modal").on("show.bs.modal", function () {
       } else {
         modal.find("#modal_use_display").prop("checked", false);
       }
-      modal.find("#modal_display_first_pin").html(data.firstDisplayPin);
-      modal.find("#modal_display_second_pin").html(data.secondDisplayPin);
+      modal.find("#modal_SDA_pin").html(data.SDAPin);
+      modal.find("#modal_SCL_pin").html(data.SCLPin);
     },
   });
 });
@@ -490,8 +411,8 @@ $("#modal_config_btn_save").click(function () {
   var modal = $("#config_modal");
 
   var mqttAddress = modal.find("#modal_mqtt_address").val();
-  var firstDisplayPin = modal.find("#modal_display_first_pin").val();
-  var secondDisplayPin = modal.find("#modal_display_second_pin").val();
+  var SDAPin = modal.find("#modal_SDA_pin").val();
+  var SCLPin = modal.find("#modal_SCL_pin").val();
 
   if (modal.find("#modal_use_display").prop("checked") == true) {
     var useDisplay = true;
@@ -505,16 +426,16 @@ $("#modal_config_btn_save").click(function () {
       mqttAddress +
       "&useDisplay=" +
       useDisplay +
-      "&firstDisplayPin=" +
-      firstDisplayPin +
-      "&secondDisplayPin=" +
-      secondDisplayPin,
+      "&SDAPin=" +
+      SDAPin +
+      "&SCLPin=" +
+      SCLPin,
     type: "POST",
     async: false,
     cache: false,
   }).done(function (msg) {
     modal.modal("hide");
-    alert(msg + "\n Page will be reloaded now!");
+    alert(msg + "\n Page will reloaded now!");
     window.location.reload(true);
   });
 });

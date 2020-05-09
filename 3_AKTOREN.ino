@@ -9,13 +9,12 @@ class Actor
 public:
   byte pin_actor = 9; // the number of the LED pin
   String argument_actor;
-  String name_actor;
   byte power_actor;
   bool isOn;
 
-  Actor(String pin, String argument, String name, String inverted)
+  Actor(String pin, String argument, String inverted)
   {
-    change(pin, argument, name, inverted);
+    change(pin, argument, inverted);
   }
 
   void Update()
@@ -44,7 +43,7 @@ public:
     }
   }
 
-  void change(String pin, String argument, String name, String inverted)
+  void change(String pin, String argument, String inverted)
   {
     // set old pin to high
     if (isPin(pin_actor))
@@ -63,8 +62,6 @@ public:
     }
 
     isOn = false;
-
-    name_actor = name;
 
     if (argument_actor != argument)
     {
@@ -155,12 +152,12 @@ public:
 
 /* Initialisierung des Arrays */
 Actor actors[NUMBER_OF_ACTORS_MAX] = {
-    Actor("", "", "", ""),
-    Actor("", "", "", ""),
-    Actor("", "", "", ""),
-    Actor("", "", "", ""),
-    Actor("", "", "", ""),
-    Actor("", "", "", "")};
+    Actor("", "", ""),
+    Actor("", "", ""),
+    Actor("", "", ""),
+    Actor("", "", ""),
+    Actor("", "", ""),
+    Actor("", "", "")};
 
 /* Funktionen für Loop */
 void handleActors()
@@ -181,8 +178,6 @@ void handleRequestActors()
   for (int i = 0; i < numberOfActors; i++)
   {
     JsonObject &actorResponse = jsonBuffer.createObject();
-    ;
-    actorResponse["name"] = actors[i].name_actor;
     actorResponse["status"] = actors[i].isOn;
     actorResponse["power"] = actors[i].power_actor;
     actorResponse["mqtt"] = actors[i].argument_actor;
@@ -209,11 +204,6 @@ void handleRequestActorConfig()
   }
   else
   {
-    if (request == "name")
-    {
-      message = actors[id].name_actor;
-      goto SendMessage;
-    }
     if (request == "script")
     {
       message = actors[id].argument_actor;
@@ -247,15 +237,10 @@ void handleSetActor()
 
   String ac_pin = PinToString(actors[id].pin_actor);
   String ac_argument = actors[id].argument_actor;
-  String ac_name = actors[id].name_actor;
   String ac_isinverted = actors[id].getInverted();
 
   for (int i = 0; i < server.args(); i++)
   {
-    if (server.argName(i) == "name")
-    {
-      ac_name = server.arg(i);
-    }
     if (server.argName(i) == "pin")
     {
       ac_pin = server.arg(i);
@@ -271,7 +256,7 @@ void handleSetActor()
     yield();
   }
 
-  actors[id].change(ac_pin, ac_argument, ac_name, ac_isinverted);
+  actors[id].change(ac_pin, ac_argument, ac_isinverted);
   saveConfig();
   server.send(201, "text/plain", "created");
 }
@@ -284,11 +269,11 @@ void handleDelActor()
   {
     if (i == NUMBER_OF_ACTORS_MAX - 1)
     {
-      actors[i].change("", "", "", "");
+      actors[i].change("", "", "");
     }
     else
     {
-      actors[i].change(PinToString(actors[i + 1].pin_actor), actors[i + 1].argument_actor, actors[i + 1].name_actor, actors[i + 1].getInverted());
+      actors[i].change(PinToString(actors[i + 1].pin_actor), actors[i + 1].argument_actor, actors[i + 1].getInverted());
     }
   }
 

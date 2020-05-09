@@ -48,9 +48,8 @@ bool loadConfig()
       JsonObject &jsonactor = jsonactors[i];
       String pin = jsonactor["PIN"];
       String topic = jsonactor["TOPIC"];
-      String name = jsonactor["NAME"];
       String inverted = jsonactor["INVERTED"];
-      actors[i].change(pin, topic, name, inverted);
+      actors[i].change(pin, topic, inverted);
     }
   }
 
@@ -71,14 +70,13 @@ bool loadConfig()
       JsonObject &jsonsensor = jsonOneWireSensors[i];
       String address = jsonsensor["ADDRESS"];
       String topic = jsonsensor["TOPIC"];
-      String name = jsonsensor["NAME"];
       float offset = jsonsensor["OFFSET"];
 
-      oneWireSensors[i].change(address, topic, name, offset);
+      oneWireSensors[i].change(address, topic, offset);
     }
     else
     {
-      oneWireSensors[i].change("", "", "", 0);
+      oneWireSensors[i].change("", "", 0);
     }
   }
 
@@ -100,14 +98,13 @@ bool loadConfig()
       String csPin = jsonPTSensor["CSPIN"];
       byte numberOfWires = jsonPTSensor["WIRES"];
       String topic = jsonPTSensor["TOPIC"];
-      String name = jsonPTSensor["NAME"];
       float offset = jsonPTSensor["OFFSET"];
 
-      ptSensors[i].change(csPin, numberOfWires, topic, name, offset);
+      ptSensors[i].change(csPin, numberOfWires, topic, offset);
     }
     else
     {
-      ptSensors[i].change("", 0, "", "", 0);
+      ptSensors[i].change("", 0, "", 0);
     }
   }
 
@@ -172,7 +169,6 @@ bool saveConfig()
   {
     JsonObject &jsactor = jsactors.createNestedObject();
     jsactor["PIN"] = PinToString(actors[i].pin_actor);
-    jsactor["NAME"] = actors[i].name_actor;
     jsactor["TOPIC"] = actors[i].argument_actor;
     jsactor["INVERTED"] = actors[i].getInverted();
   }
@@ -183,7 +179,6 @@ bool saveConfig()
   {
     JsonObject &jsonOneWireSensor = jsonOneWireSensors.createNestedObject();
     jsonOneWireSensor["ADDRESS"] = oneWireSensors[i].getSens_address_string();
-    jsonOneWireSensor["NAME"] = oneWireSensors[i].name;
     jsonOneWireSensor["TOPIC"] = oneWireSensors[i].mqtttopic;
     jsonOneWireSensor["OFFSET"] = oneWireSensors[i].offset;
   }
@@ -195,7 +190,6 @@ bool saveConfig()
     JsonObject &jsonPTSensor = jsonPTSensors.createNestedObject();
     jsonPTSensor["CSPIN"] = PinToString(ptSensors[i].csPin);
     jsonPTSensor["WIRES"] = ptSensors[i].numberOfWires;
-    jsonPTSensor["NAME"] = ptSensors[i].name;
     jsonPTSensor["TOPIC"] = ptSensors[i].mqttTopic;
     jsonPTSensor["OFFSET"] = ptSensors[i].offset;
   }

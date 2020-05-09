@@ -4,15 +4,15 @@
 
 ## Introduction
 The Indebrau MQTTDevice is an Arduino sketch based on the ESP8266 to enable stable wireless communication between [CraftBeerPi V3](https://github.com/Manuel83/craftbeerpi3) with actors and sensors, based on the MQTT protocol.
-It is based on the "original" MQTTDevice project, started here [here](https://github.com/matschie1/MQTTDevice) and continued here [here](https://github.com/MQTTDevice/MQTTDevice).
-The main feature difference is the support of the more accurate (yet a little more expensive) PT100/1000 RTD sensors, using Adafruit's "Temperature Sensor Amplifier MAX31865" chip and library.
-Additionally, it is possible to use a JSN-SR04T 2.0 ultrasonic sensor for controling the fill level of a kettle, which works great together with [this CBPi plugin](https://github.com/indebrau/cbpi-LauteringAutomation).
+It is based on the initial MQTTDevice project, started here [here](https://github.com/matschie1/MQTTDevice) and continued here [here](https://github.com/MQTTDevice/MQTTDevice).
+The main feature difference is the support of the more accurate (yet a little more expensive) PT100/1000 RTD sensors, using Adafruit's "Temperature Sensor Amplifier MAX31865" sensor breakout board and library.
+Additionally, it is possible to use a VL53L0X ToF distance sensor for managing the fill level of a kettle, which works great together with [this CBPi plugin](https://github.com/indebrau/cbpi-LauteringAutomation).
 
 ## Features
 * Sensors
   * PT100/1000
   * OneWire
-  * Ultrasonic
+  * Distance sensor
   * Offset calibration
 * Actors
   * Inverted GPIO support
@@ -26,7 +26,7 @@ Additionally, it is possible to use a JSN-SR04T 2.0 ultrasonic sensor for contro
 (to come, check out the different controller repositories for (currently) undocumented 3d-print case- and pcb layouts)
 
 ## Needed Libraries (please install in Ardunio before flashing)
-* esp8266 (by ESP8266 Community) version 2.6.3 (the board)
+* esp8266 (by ESP8266 Community) version 2.7.1 (the board)
 * OneWire (by Jim Studt..) version 2.3.5
 * DallasTemperature (by Miles Burton...) version 3.8.0
 * PubSubClient (by Nick O''Leary) version 2.7.0
@@ -34,6 +34,7 @@ Additionally, it is possible to use a JSN-SR04T 2.0 ultrasonic sensor for contro
 * WiFiManager (by tzapu) version 0.15.0
 * Adafruit MAX31865 (by Adafruit) version 1.0.3
 * Adafruit SSD1306 (by Adafruit) version 2.2.1
+* Adafruit_VL53L0X.h (by Adafruit) version 1.0.7
 
 ## Limitations
 * Display has to be 128x32 px

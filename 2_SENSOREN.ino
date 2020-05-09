@@ -10,7 +10,6 @@ private:
 public:
   char mqtttopic[50];
   byte address[8]; // one wire address
-  String name;     // just a name that is displayed (in frontend)
   float value;     // value to be send
   float offset;
 
@@ -19,9 +18,9 @@ public:
     return OneWireAddressToString(address);
   }
 
-  OneWireSensor(String address, String mqtttopic, String name, float offset)
+  OneWireSensor(String address, String mqtttopic, float offset)
   {
-    change(address, mqtttopic, name, offset);
+    change(address, mqtttopic, offset);
   }
 
   void update()
@@ -35,7 +34,7 @@ public:
       if (value == -127.0)
       {
         Serial.print("OneWire Sensor ");
-        Serial.print(name);
+        Serial.print(mqtttopic);
         Serial.println(" not found!");
       }
       else
@@ -43,7 +42,7 @@ public:
         if (value == 85.0)
         {
           Serial.print("One Wire Sensor ");
-          Serial.print(name);
+          Serial.print(mqtttopic);
           Serial.println(" Error!");
         }
         else
@@ -57,10 +56,9 @@ public:
     }
   }
 
-  void change(String new_address, String new_mqtttopic, String new_name, float new_offset)
+  void change(String new_address, String new_mqtttopic, float new_offset)
   {
     new_mqtttopic.toCharArray(mqtttopic, new_mqtttopic.length() + 1);
-    name = new_name;
     offset = new_offset;
     // if this check fails, this could also mean a call from array init
     // (no actual sensor defined for this array entry, so skip init here)
@@ -121,13 +119,12 @@ public:
   byte csPin = DEFAULT_CS_PIN; // set to default, otherwise would be "D3" (-> Arduino 0)
   byte numberOfWires;
   char mqttTopic[50];
-  String name; // just a name that is displayed (in frontend)
   float value; // value to be send
   float offset;
 
-  PTSensor(String csPin, byte numberOfWires, String mqtttopic, String name, float offset)
+  PTSensor(String csPin, byte numberOfWires, String mqtttopic, float offset)
   {
-    change(csPin, numberOfWires, mqtttopic, name, offset);
+    change(csPin, numberOfWires, mqtttopic, offset);
   }
 
   void update()
@@ -151,7 +148,7 @@ public:
     }
   }
 
-  void change(String newCSPin, byte newNumberOfWires, String newMqttTopic, String newName, float newOffset)
+  void change(String newCSPin, byte newNumberOfWires, String newMqttTopic, float newOffset)
   {
     // check for initial empty array entry initialization
     // (no actual sensor defined in this call)
@@ -166,7 +163,6 @@ public:
         pins_used[csPin] = true;
         newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
         numberOfWires = newNumberOfWires;
-        name = newName;
         offset = newOffset;
         maxChip = Adafruit_MAX31865(csPin, PT_PINS[0], PT_PINS[1], PT_PINS[2]);
         Serial.print("Starting PT sensor with ");
@@ -226,8 +222,8 @@ public:
     {
       VL53L0X_RangingMeasurementData_t measure;
       distanceSensorChip.rangingTest(&measure, false);
-      // Range between 0 and 800 millimeter is more or less accurate
-      if (measure.RangeStatus != 4 && measure.RangeMilliMeter < 800)
+      // Range between 20 and 800 millimeter is more or less accurate
+      if (measure.RangeStatus != 4 && measure.RangeMilliMeter < 800 && measure.RangeMilliMeter > 20)
       {
         value = measure.RangeMilliMeter / 10.0;
         publishmqtt();
@@ -242,11 +238,9 @@ public:
 
   void change(String newMqttTopic)
   {
-    // check for initial empty array entry initialization
-    // (no actual sensor defined in this call)
+    // check for non-empty topic
     if (newMqttTopic != "")
     {
-      useDistanceSensor = true;
       newMqttTopic.toCharArray(mqttTopic, newMqttTopic.length() + 1);
       Serial.print("Starting distance sensor with topic ");
       Serial.println(newMqttTopic);
@@ -275,20 +269,20 @@ public:
   TODO: Initialized hardcoded to (max) 6 sensors
 */
 OneWireSensor oneWireSensors[NUMBER_OF_SENSORS_MAX] = {
-    OneWireSensor("", "", "", 0),
-    OneWireSensor("", "", "", 0),
-    OneWireSensor("", "", "", 0),
-    OneWireSensor("", "", "", 0),
-    OneWireSensor("", "", "", 0),
-    OneWireSensor("", "", "", 0)};
+    OneWireSensor("", "", 0),
+    OneWireSensor("", "", 0),
+    OneWireSensor("", "", 0),
+    OneWireSensor("", "", 0),
+    OneWireSensor("", "", 0),
+    OneWireSensor("", "", 0)};
 
 PTSensor ptSensors[NUMBER_OF_SENSORS_MAX] = {
-    PTSensor("", 0, "", "", 0),
-    PTSensor("", 0, "", "", 0),
-    PTSensor("", 0, "", "", 0),
-    PTSensor("", 0, "", "", 0),
-    PTSensor("", 0, "", "", 0),
-    PTSensor("", 0, "", "", 0)};
+    PTSensor("", 0, "", 0),
+    PTSensor("", 0, "", 0),
+    PTSensor("", 0, "", 0),
+    PTSensor("", 0, "", 0),
+    PTSensor("", 0, "", 0),
+    PTSensor("", 0, "", 0)};
 
 DistanceSensor distanceSensor = DistanceSensor("");
 
@@ -348,11 +342,12 @@ String OneWireAddressToString(byte addr[8])
 /* Update sensor attributes or create new sensor.*/
 void handleSetSensor()
 {
-  int id = server.arg(0).toInt();
-  String type = server.arg(1);
+  String type = server.arg(0);
+  String newTopic = server.arg(1);
 
   if (type == SENSOR_TYPE_ONE_WIRE)
   {
+    int id = server.arg(2).toInt();
     // means: create new sensor request
     if (id == -1)
     {
@@ -364,14 +359,14 @@ void handleSetSensor()
         pins_used[ONE_WIRE_BUS] = true;
       }
     }
-    String newName = server.arg(2);
-    String newTopic = server.arg(3);
-    String newAddress = server.arg(4);
-    float newOffset = server.arg(5).toFloat();
-    oneWireSensors[id].change(newAddress, newTopic, newName, newOffset);
+
+    String newAddress = server.arg(3);
+    float newOffset = server.arg(4).toFloat();
+    oneWireSensors[id].change(newAddress, newTopic, newOffset);
   }
   else if (type == SENSOR_TYPE_PT)
   {
+    int id = server.arg(2).toInt();
     // means: create new sensor request
     if (id == -1)
     {
@@ -385,17 +380,20 @@ void handleSetSensor()
         pins_used[PT_PINS[2]] = true;
       }
     }
-    String newName = server.arg(2);
-    String newTopic = server.arg(3);
-    String newCsPin = server.arg(4);
-    byte newNumberOfWires = server.arg(5).toInt();
-    float newOffset = server.arg(6).toFloat();
-    ptSensors[id].change(newCsPin, newNumberOfWires, newTopic, newName, newOffset);
+    String newCsPin = server.arg(3);
+    byte newNumberOfWires = server.arg(4).toInt();
+    float newOffset = server.arg(5).toFloat();
+    ptSensors[id].change(newCsPin, newNumberOfWires, newTopic, newOffset);
   }
   else if (type == SENSOR_TYPE_DISTANCE)
   {
-    String newTopic = server.arg(2);
     distanceSensor.change(newTopic);
+    if (!useDistanceSensor)
+    { // if sensor did not run yet, restart needed
+      useDistanceSensor = true;
+      saveConfig();
+      rebootDevice();
+    }
   }
   else
   {
@@ -419,7 +417,7 @@ void handleDelSensor()
     // effectively overwriting the sensor to be deleted..
     for (int i = id; i < numberOfOneWireSensors; i++)
     {
-      oneWireSensors[i].change(oneWireSensors[i + 1].getSens_address_string(), oneWireSensors[i + 1].mqtttopic, oneWireSensors[i + 1].name, oneWireSensors[i + 1].offset);
+      oneWireSensors[i].change(oneWireSensors[i + 1].getSens_address_string(), oneWireSensors[i + 1].mqtttopic, oneWireSensors[i + 1].offset);
       yield();
     }
     // ..and declare the array's content to one sensor less
@@ -439,7 +437,7 @@ void handleDelSensor()
     for (int i = id; i < numberOfPTSensors; i++)
     {
       String csPinString = String(ptSensors[i + 1].csPin); // yeah, not very nice or efficient..
-      ptSensors[i].change(csPinString, ptSensors[i + 1].numberOfWires, ptSensors[i + 1].mqttTopic, ptSensors[i + 1].name, ptSensors[i + 1].offset);
+      ptSensors[i].change(csPinString, ptSensors[i + 1].numberOfWires, ptSensors[i + 1].mqttTopic, ptSensors[i + 1].offset);
       yield();
     }
     // ..and declare the array's content to one sensor less
@@ -541,8 +539,6 @@ void handleRequestSensors()
   for (int i = 0; i < numberOfOneWireSensors; i++)
   {
     JsonObject &sensorResponse = jsonBuffer.createObject();
-    ;
-    sensorResponse["name"] = oneWireSensors[i].name;
     if ((oneWireSensors[i].value != -127.0) && (oneWireSensors[i].value != 85.0))
     {
       sensorResponse["value"] = oneWireSensors[i].getValueString();
@@ -561,7 +557,6 @@ void handleRequestSensors()
   for (int i = 0; i < numberOfPTSensors; i++)
   {
     JsonObject &sensorResponse = jsonBuffer.createObject();
-    sensorResponse["name"] = ptSensors[i].name;
     // While it is technically possible to read this low value with a PT sensor
     // We reuse "OneWire Error Codes" here for simplicity
     if (ptSensors[i].value != -127.0)
@@ -592,6 +587,7 @@ void handleRequestSensors()
       sensorResponse["value"] = "ERR";
     }
     sensorResponse["mqtt"] = distanceSensor.mqttTopic;
+    sensorResponse["type"] = SENSOR_TYPE_DISTANCE;
     sensorsResponse.add(sensorResponse);
     yield();
   }
@@ -619,7 +615,6 @@ void handleRequestSensorConfig()
     {
       StaticJsonBuffer<1024> jsonBuffer;
       JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["name"] = oneWireSensors[id].name;
       sensorJson["topic"] = oneWireSensors[id].mqtttopic;
       sensorJson["offset"] = oneWireSensors[id].offset;
       sensorJson.printTo(response);
@@ -637,7 +632,6 @@ void handleRequestSensorConfig()
     {
       StaticJsonBuffer<1024> jsonBuffer;
       JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["name"] = ptSensors[id].name;
       sensorJson["topic"] = ptSensors[id].mqttTopic;
       sensorJson["csPin"] = PinToString(ptSensors[id].csPin);
       sensorJson["numberOfWires"] = ptSensors[id].numberOfWires;

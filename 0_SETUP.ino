@@ -56,7 +56,7 @@ void setup()
   {
     pins_used[SDAPin] = true;
     pins_used[SCLPin] = true;
-    Wire.begin(SDAPin, SCLPin); // SDA and SCL
+    Wire.begin(SDAPin, SCLPin);
 
     if (useDisplay)
     {
