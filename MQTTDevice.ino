@@ -7,8 +7,8 @@
  * Currently supports:
  * - Control of GGM Induction cooker IDS2 (emulates original control device)
  * - DS18B20 sensors
- * - PT100/1000 sensors (using the Adafruit max31865 amplifier and library)
- * - Distance sensor (useful for measuring fill levels, to automate your lautering)
+ * - PT100/1000 sensors (using the Adafruit MAX31865 amplifier and library)
+ * - Distance sensor (using Adafruit VL53L0X library, useful for measuring fill levels)
  * - GIPO controlled actors with emulated PWM
  * - OverTheAir firmware updates
  *
@@ -43,7 +43,7 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.2.0 (09.05.2020)";
+const String DEVICE_VERSION = "v1.2.0 (10.05.2020)";
 
 const byte ONE_WIRE_BUS = D8; // default PIN for initialization, in the future to be configured via Web frontend
 
@@ -82,22 +82,6 @@ const String SENSOR_TYPE_DISTANCE = "Distance";
 const byte MQTT_CONNECT_DELAY_SECONDS = 10;
 const byte MQTT_NUMBER_OF_TRIES = 1;
 
-// induction cooker signal timings
-const int SIGNAL_HIGH = 5120;
-const int SIGNAL_HIGH_TOL = 1500;
-const int SIGNAL_LOW = 1280;
-const int SIGNAL_LOW_TOL = 500;
-const int SIGNAL_START = 25;
-const int SIGNAL_START_TOL = 10;
-const int SIGNAL_WAIT = 10;
-const int SIGNAL_WAIT_TOL = 5;
-
-// percentage steps (induction cooker)
-const byte PWR_STEPS[] = {0, 20, 40, 60, 80, 100};
-
-// error messages of the induction cooker
-const String ERROR_MESSAGES[10] = {"E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "EC"};
-
 const byte NUMBER_OF_PINS = 9; // the "configurable" pins
 const byte PINS[NUMBER_OF_PINS] = {D0, D1, D2, D3, D4, D5, D6, D7, D8};
 const String PIN_NAMES[NUMBER_OF_PINS] = {"D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8"};
@@ -105,22 +89,49 @@ const String PIN_NAMES[NUMBER_OF_PINS] = {"D0", "D1", "D2", "D3", "D4", "D5", "D
 const byte NUMBER_OF_SENSORS_MAX = 6; // max number of sensors per type (if changed, please init accordingly!)
 const byte NUMBER_OF_ACTORS_MAX = 6;  // max number of actors (if changed, please init accordingly!)
 
+// induction cooker signal timings
+const int SIGNAL_HIGH = 5120;
+const int SIGNAL_LOW = 1280;
+const byte SIGNAL_START = 25;
+const byte SIGNAL_WAIT = 10;
+
+// percentage steps (induction cooker)
+const byte PWR_STEPS[] = {0, 20, 40, 60, 80, 100};
+
+// signals for induction cooker
+const int CMD[6][33] = {
+    {SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW}, // Off
+    {SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW,
+     SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW}, // PSIGNAL_HIGH
+    {SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH,
+     SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW}, // P2
+    {SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_HIGH, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_HIGH,
+     SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW}, // P3
+    {SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW}, // P4
+    {SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW,
+     SIGNAL_LOW, SIGNAL_HIGH, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW, SIGNAL_LOW} // P5
+};
+
 /*########## GLOBAL VARIABLES #########*/
 ESP8266WebServer server(WEB_SERVER_PORT);
 WiFiManager wifiManager;
 WiFiClient espClient;
 PubSubClient client(espClient);
 WiFiServer TelnetServer(TELNET_SERVER_PORT); // OTA
-
-// init binary signals for induction cooker (not constants, changing!)
-int CMD[6][33] = {
-    {1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0}, // Off
-    {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P1
-    {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0}, // P2
-    {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0}, // P3
-    {1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0}, // P4
-    {1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}  // P5
-};
 
 // careful here, these are not only the Wemos-numbered GIPO (D0-D8), but all of them (see also Pinmap)
 bool pins_used[17];

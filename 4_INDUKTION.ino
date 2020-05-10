@@ -33,7 +33,6 @@ public:
 
   Induction()
   {
-    setupCommands();
   }
 
   void change(byte pinwhite, byte pinyellow, byte pinblue, String topic, long delayoff, bool is_enabled)
@@ -46,23 +45,18 @@ public:
         digitalWrite(PIN_WHITE, HIGH);
         pins_used[PIN_WHITE] = false;
       }
-
       if (isPin(PIN_YELLOW))
       {
         digitalWrite(PIN_YELLOW, HIGH);
         pins_used[PIN_YELLOW] = false;
       }
-
       if (isPin(PIN_INTERRUPT))
       {
         digitalWrite(PIN_INTERRUPT, HIGH);
         pins_used[PIN_INTERRUPT] = false;
       }
-
       mqtt_unsubscribe();
     }
-
-    // Neue Variablen Speichern
 
     PIN_WHITE = pinwhite;
     PIN_YELLOW = pinyellow;
@@ -82,14 +76,12 @@ public:
         digitalWrite(PIN_WHITE, LOW);
         pins_used[PIN_WHITE] = true;
       }
-
       if (isPin(PIN_YELLOW))
       {
         pinMode(PIN_YELLOW, OUTPUT);
         digitalWrite(PIN_YELLOW, LOW);
         pins_used[PIN_YELLOW] = true;
       }
-
       if (isPin(PIN_INTERRUPT))
       {
         pinMode(PIN_INTERRUPT, INPUT_PULLUP);
@@ -133,14 +125,11 @@ public:
   {
     StaticJsonBuffer<128> jsonBuffer;
     JsonObject &json = jsonBuffer.parseObject(payload);
-
     if (!json.success())
     {
       return;
     }
-
     String state = json["state"];
-
     if (state == "off")
     {
       newPower = 0;
@@ -152,48 +141,25 @@ public:
     }
   }
 
-  void setupCommands()
-  {
-    for (int i = 0; i < 33; i++)
-    {
-      for (int j = 0; j < 6; j++)
-      {
-        if (CMD[j][i] == 1)
-        {
-          CMD[j][i] = SIGNAL_HIGH;
-        }
-        else
-        {
-          CMD[j][i] = SIGNAL_LOW;
-        }
-      }
-    }
-  }
-
   bool updateRelay()
   {
     if (isInduon == true && isRelayon == false)
-    { /* Relais einschalten */
-      Serial.println("Turning Relay on");
+    {
       digitalWrite(PIN_WHITE, HIGH);
       return true;
     }
-
     if (isInduon == false && isRelayon == true)
-    { /* Relais ausschalten */
+    {
       if (millis() > timeTurnedOff + delayAfteroff)
       {
-        Serial.println("Turning Relay off");
         digitalWrite(PIN_WHITE, LOW);
         return false;
       }
     }
-
     if (isInduon == false && isRelayon == false)
     { /* Ist aus, bleibt aus. */
       return false;
     }
-
     return true; /* Ist an, bleibt an. */
   }
 
@@ -230,8 +196,7 @@ public:
   {
     lastCommand = millis();
     if (power != newPower)
-    { /* Neuer Befehl empfangen */
-
+    { /* Neuen Befehl empfangen */
       if (newPower > 100)
       {
         newPower = 100; /* Nicht > 100 */
@@ -240,15 +205,10 @@ public:
       {
         newPower = 0; /* Nicht < 0 */
       }
-      Serial.print("Setting Power to ");
-      Serial.println(newPower);
-
       power = newPower;
-
       timeTurnedOff = 0;
       isInduon = true;
       long difference = 0;
-
       if (power == 0)
       {
         CMD_CUR = 0;
@@ -257,7 +217,6 @@ public:
         difference = 0;
         goto setPowerLevel;
       }
-
       for (int i = 1; i < 7; i++)
       {
         if (power <= PWR_STEPS[i])
@@ -267,7 +226,6 @@ public:
           goto setPowerLevel;
         }
       }
-
     setPowerLevel: /* Wie lange "HIGH" oder "LOW" */
       if (difference != 0)
       {
@@ -282,7 +240,7 @@ public:
     }
   }
 
-  void sendCommand(int command[33])
+  void sendCommand(const int command[33])
   {
     digitalWrite(PIN_YELLOW, HIGH);
     delay(SIGNAL_START);
@@ -297,71 +255,10 @@ public:
       delayMicroseconds(SIGNAL_LOW);
     }
   }
-
-  void readInput()
-  {
-    //  // Variablen sichern
-    bool ishigh = digitalRead(PIN_INTERRUPT);
-    unsigned long newInterrupt = micros();
-    long signalTime = newInterrupt - lastInterrupt;
-
-    // Glitch rausfiltern
-    if (signalTime > 10)
-    {
-
-      if (ishigh)
-      {
-        lastInterrupt = newInterrupt; // PIN ist auf Rising, Bit senden hat gestartet
-      }
-      else
-      { // Bit ist auf Falling, Bit Übertragung fertig. Auswerten.
-
-        if (!inputStarted)
-        { // suche noch nach StartBit.
-          if (signalTime < 35000L && signalTime > 15000L)
-          {
-            inputStarted = true;
-            inputCurrent = 0;
-          }
-        }
-        else
-        { // Hat Begonnen. Nehme auf.
-          if (inputCurrent < 34)
-          { // nur bis 33 aufnehmen.
-            if (signalTime < (SIGNAL_HIGH + SIGNAL_HIGH_TOL) && signalTime > (SIGNAL_HIGH - SIGNAL_HIGH_TOL))
-            {
-              // HIGH BIT erkannt
-              inputBuffer[inputCurrent] = 1;
-              inputCurrent += 1;
-            }
-            if (signalTime < (SIGNAL_LOW + SIGNAL_LOW_TOL) && signalTime > (SIGNAL_LOW - SIGNAL_LOW_TOL))
-            {
-              // LOW BIT erkannt
-              inputBuffer[inputCurrent] = 0;
-              inputCurrent += 1;
-            }
-          }
-          else
-          { // Aufnahme vorbei.
-
-            /* von Vorne */
-            inputCurrent = 0;
-            inputStarted = false;
-          }
-        }
-      }
-    }
-  }
 }
 
 inductionCooker = Induction();
 
-void readInputWrap()
-{
-  inductionCooker.readInput();
-}
-
-/* Funktion für Loop */
 void handleInduction()
 {
   inductionCooker.Update();

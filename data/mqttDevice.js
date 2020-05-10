@@ -27,13 +27,13 @@ function refresh() {
       sensor += element.mqtt;
       sensor += " </span> <span class='badge badge-info'> ";
       sensor += element.type;
-
       sensor +=
         " </span> <a href='' class='badge badge-warning' data-toggle='modal' data-target='#sensor_modal' data-id='";
       if (element.type === "PTSensor" || element.type === "OneWire") {
         sensor += element.id;
       } else if (element.type === "Distance") {
         sensor += 1; // CONVENTION: means: sensor exists
+        $("#addDistanceSensor").hide();
       }
       sensor += "' data-type='";
       sensor += element.type;
@@ -264,8 +264,8 @@ $("#modal_sensor_btn_save").click(function () {
     var numberOfWires = modal.find("#modal_sensor_number_of_wires").val();
     $.ajax({
       url:
-        `/setSensor?type=${sensorType}&topic=${sensorTopic}` +
-        `&id=${sensorId}&cspin=${csPin}&numberOfWires=${numberOfWires}&sensorOffset=${sensorOffset}`,
+        `/setSensor?type=${sensorType}&topic=${sensorTopic}&id=${sensorId}` +
+        `&cspin=${csPin}&numberOfWires=${numberOfWires}&sensorOffset=${sensorOffset}`,
       type: "POST",
       async: false,
       cache: false,
@@ -298,6 +298,9 @@ $("#modal_sensor_btn_delete").click(function () {
     async: false,
     cache: false,
   });
+  if (sensorType === "Distance") {
+    $("#addDistanceSensor").show();
+  }
   modal.modal("hide");
 });
 
