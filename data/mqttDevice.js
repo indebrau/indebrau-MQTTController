@@ -402,6 +402,7 @@ $("#config_modal").on("show.bs.modal", function () {
     async: false,
     cache: false,
     success: function (data) {
+      modal.find("#modal_device_name").val(data.deviceName);
       modal.find("#modal_mqtt_address").val(data.mqttAddress);
       modal.find("#modal_use_display").prop("checked", data.useDisplay);
       modal.find("#modal_SDA_pin").html(data.SDAPin);
@@ -414,6 +415,10 @@ $("#config_modal").on("show.bs.modal", function () {
 $("#modal_config_btn_save").click(function () {
   var modal = $("#config_modal");
 
+  var deviceName = modal.find("#modal_device_name").val();
+  // remove special characters to not get problems with device name
+  var regex = new RegExp('[^A-Za-z0-9]', 'g');
+  deviceName = deviceName.replace(regex, '');
   var mqttAddress = modal.find("#modal_mqtt_address").val();
   var SDAPin = modal.find("#modal_SDA_pin").val();
   var SCLPin = modal.find("#modal_SCL_pin").val();
@@ -421,14 +426,8 @@ $("#modal_config_btn_save").click(function () {
 
   $.ajax({
     url:
-      "/setSysConfig?mqttAddress=" +
-      mqttAddress +
-      "&useDisplay=" +
-      useDisplay +
-      "&SDAPin=" +
-      SDAPin +
-      "&SCLPin=" +
-      SCLPin,
+      `/setSysConfig?deviceName=${deviceName}&mqttAddress=${mqttAddress}`+
+      `&useDisplay=${useDisplay}&SDAPin=${SDAPin}&SCLPin=${SCLPin}`,
     type: "POST",
     async: false,
     cache: false,
@@ -440,6 +439,7 @@ $("#modal_config_btn_save").click(function () {
 });
 
 /* after initial loading is done, once get the firmware version */
-$.get("/version", function (data) {
-  $("#version").html("Firmware Device: " + data);
+$.get("/nameandversion", function (data) {
+  $("#name").html(data.name);
+  $("#version").html("Firmware Device: " + data.version);
 });

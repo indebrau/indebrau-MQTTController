@@ -122,7 +122,7 @@ bool loadConfig()
     inductionCooker.change(StringToPin(pin_white), StringToPin(pin_yellow), StringToPin(pin_blue), js_mqtttopic, delayoff, is_enabled);
   }
 
-  //Read display and distance sensor
+  // read display and distance sensor
   JsonObject jsonI2C = jsonDocument["I2C"];
   useDisplay = jsonI2C["USEDISPLAY"];
   useDistanceSensor = jsonI2C["USEDISTANCESENSOR"];
@@ -141,9 +141,12 @@ bool loadConfig()
   Serial.print("Distance sensor loaded: ");
   Serial.println(useDistanceSensor);
 
-  // Read MQTT host
+  // finally read MQTT host and device name
   String json_mqtthost = jsonDocument["MQTTHOST"];
   json_mqtthost.toCharArray(mqtthost, 16);
+  String json_deviceName = jsonDocument["DEVICENAME"];
+  json_deviceName.toCharArray(customDeviceName, 10);
+
   return true;
 }
 
@@ -158,7 +161,7 @@ bool saveConfig()
     return false;
   }
 
-  // Write actors
+  // write actors
   JsonArray jsactors = jsonDocument.createNestedArray("actors");
   for (int i = 0; i < numberOfActors; i++)
   {
@@ -216,8 +219,9 @@ bool saveConfig()
     }
   }
 
-  // Write MQTT host
+  // finally write MQTT host and device name
   jsonDocument["MQTTHOST"] = mqtthost;
+  jsonDocument["DEVICENAME"] = customDeviceName;
 
   serializeJsonPretty(jsonDocument, configFile);
   return true;

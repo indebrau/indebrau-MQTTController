@@ -1,7 +1,6 @@
 void setup()
 {
   Serial.begin(115200);
-  snprintf(deviceName, 25, "MQTTDevice-%08X", ESP.getChipId()); // Set device name
 
   // load SPIF file system
   ESP.wdtFeed();
@@ -13,6 +12,8 @@ void setup()
   // load settings from config.json
   ESP.wdtFeed();
   loadConfig();
+
+  snprintf(deviceName, 30, "MQTTDevice-%s-%08X", customDeviceName, ESP.getChipId()); // set device name
 
   // declare OneWire and PT Pins as used
   if (numberOfOneWireSensors > 0)
@@ -118,9 +119,9 @@ void setupServer()
   server.on("/getSysConfig", getSysConfig); // returns display config and mqtthost as json
   server.on("/setSysConfig", setSysConfig); // saves display config and mqtthost to config file
 
-  server.on("/version", getVersion);        // returns the (hardcoded) firmware version of this device
-  server.on("/mqttStatus", getMqttStatus);  // returns the current MQTT connection status
-  server.on("/getOtherPins", getOtherPins); // returns other configuration (used pins)
+  server.on("/nameandversion", getNameAndVersion); // returns name and version of device
+  server.on("/mqttStatus", getMqttStatus);         // returns the current MQTT connection status
+  server.on("/getOtherPins", getOtherPins);        // returns other configuration (used pins)
 
   server.onNotFound(handleWebRequests); // fallback
 

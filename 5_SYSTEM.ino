@@ -5,9 +5,14 @@ void rebootDevice()
   ESP.restart();
 }
 
-void getVersion()
+void getNameAndVersion()
 {
-  server.send(200, "text/plain", DEVICE_VERSION);
+  StaticJsonDocument<256> jsonDocument;
+  jsonDocument["version"] = DEVICE_VERSION;
+  jsonDocument["name"] = customDeviceName;
+  String response;
+  serializeJson(jsonDocument, response);
+  server.send(200, "application/json", response);
 }
 
 void getMqttStatus()
@@ -61,6 +66,7 @@ void getSysConfig()
   String mqttAddress(mqtthost);
   StaticJsonDocument<1024> jsonDocument;
 
+  jsonDocument["deviceName"] = customDeviceName;
   jsonDocument["mqttAddress"] = mqttAddress;
   jsonDocument["useDisplay"] = useDisplay;
 
@@ -106,11 +112,13 @@ void getSysConfig()
 
 void setSysConfig()
 {
-  String string_mqtthost = server.arg(0);
+  String string_deviceName = server.arg(0);
+  string_deviceName.toCharArray(customDeviceName, 10);
+  String string_mqtthost = server.arg(1);
   string_mqtthost.toCharArray(mqtthost, 16);
-  String string_useDisplay = server.arg(1);
-  SDAPin = StringToPin(server.arg(2));
-  SCLPin = StringToPin(server.arg(3));
+  String string_useDisplay = server.arg(2);
+  SDAPin = StringToPin(server.arg(3));
+  SCLPin = StringToPin(server.arg(4));
   if (string_useDisplay == "true")
   {
     useDisplay = true;

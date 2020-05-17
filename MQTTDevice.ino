@@ -154,6 +154,7 @@ byte SCLPin;
 
 char mqtthost[16] = ""; // mqtt server ip
 long mqttconnectlasttry;
-char deviceName[25]; // device name, also the name this device will use to register at the mqtt server
+char customDeviceName[10] = ""; // name that can be given to the device in the frontend
+char deviceName[30];            // complete device name, also the name this device will use to register at the mqtt server
 
 unsigned long lastToggled = 0; // last system update timestamp
