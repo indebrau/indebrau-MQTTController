@@ -120,20 +120,26 @@ public:
       return;
     }
 
-    String state = jsonDocument["state"];
-
-    if (state == "off")
+    bool state = jsonDocument["on"];
+    if (!state)
     {
       isOn = false;
       power_actor = 0;
       return;
     }
-    else if (state == "on")
+    else if (state)
     {
-      int newpower = jsonDocument["power"];
+      byte newPower = jsonDocument["power"];
       isOn = true;
-      power_actor = min(100, newpower);
-      power_actor = max(0, newpower);
+      if (newPower > 100)
+      {
+        newPower = 100;
+      }
+      if (newPower < 0)
+      {
+        newPower = 0;
+      }
+      power_actor = newPower;
       return;
     }
   }

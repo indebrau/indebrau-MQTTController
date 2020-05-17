@@ -23,9 +23,9 @@ public:
   byte PIN_INTERRUPT = 9; // EINGABE VON PLATTE
   byte power = 0;
   byte newPower = 0;
-  byte CMD_CUR = 0;          // Aktueller Befehl
+  byte CMD_CUR = 0; // Aktueller Befehl
   bool isRelayOn = false;
-  bool isInduOn = false;  // Systemstatus: ist Power > 0?
+  bool isInduOn = false; // Systemstatus: ist Power > 0?
   bool isPower = false;
   String mqtttopic = "";
   bool isEnabled = false;
@@ -131,13 +131,13 @@ public:
       Serial.println(error.c_str());
       return;
     }
-    String state = jsonDocument["state"];
-    if (state == "off")
+    bool state = jsonDocument["on"];
+    if (!state)
     {
       newPower = 0;
       return;
     }
-    else if (state == "on")
+    else if (state)
     {
       newPower = jsonDocument["power"];
     }
