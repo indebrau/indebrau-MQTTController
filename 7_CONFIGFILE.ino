@@ -22,16 +22,16 @@ bool loadConfig()
 
   configFile.readBytes(buf.get(), size);
 
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonObject &json = jsonBuffer.parseObject(buf.get());
-
-  if (!json.success())
+  StaticJsonDocument<1024> jsonDocument;
+  DeserializationError error = deserializeJson(jsonDocument, buf.get());
+  if (error)
   {
+    Serial.println(error.c_str());
     return false;
   }
 
   // read Actors
-  JsonArray &jsonactors = json["actors"];
+  JsonArray jsonactors = jsonDocument["actors"];
   numberOfActors = jsonactors.size();
   Serial.print("Number of actors loaded: ");
   Serial.println(numberOfActors);
@@ -45,16 +45,16 @@ bool loadConfig()
   {
     if (i < numberOfActors)
     {
-      JsonObject &jsonactor = jsonactors[i];
+      JsonObject jsonactor = jsonactors[i];
       String pin = jsonactor["PIN"];
       String topic = jsonactor["TOPIC"];
-      String inverted = jsonactor["INVERTED"];
+      bool inverted = jsonactor["INVERTED"];
       actors[i].change(pin, topic, inverted);
     }
   }
 
   // read OneWire sensors
-  JsonArray &jsonOneWireSensors = json["OneWireSensors"];
+  JsonArray jsonOneWireSensors = jsonDocument["OneWireSensors"];
   numberOfOneWireSensors = jsonOneWireSensors.size();
   if (numberOfOneWireSensors > NUMBER_OF_SENSORS_MAX)
   {
@@ -67,7 +67,7 @@ bool loadConfig()
   {
     if (i < numberOfOneWireSensors)
     {
-      JsonObject &jsonsensor = jsonOneWireSensors[i];
+      JsonObject jsonsensor = jsonOneWireSensors[i];
       String address = jsonsensor["ADDRESS"];
       String topic = jsonsensor["TOPIC"];
       float offset = jsonsensor["OFFSET"];
@@ -81,7 +81,7 @@ bool loadConfig()
   }
 
   // read PT100/1000 sensors
-  JsonArray &jsonPTSensors = json["PTSensors"];
+  JsonArray jsonPTSensors = jsonDocument["PTSensors"];
   numberOfPTSensors = jsonPTSensors.size();
   if (numberOfPTSensors > NUMBER_OF_SENSORS_MAX)
   {
@@ -94,7 +94,7 @@ bool loadConfig()
   {
     if (i < numberOfPTSensors)
     {
-      JsonObject &jsonPTSensor = jsonPTSensors[i];
+      JsonObject jsonPTSensor = jsonPTSensors[i];
       String csPin = jsonPTSensor["CSPIN"];
       byte numberOfWires = jsonPTSensor["WIRES"];
       String topic = jsonPTSensor["TOPIC"];
@@ -109,25 +109,21 @@ bool loadConfig()
   }
 
   // Read induction
-  JsonArray &jsinductions = json["induction"];
-  JsonObject &jsinduction = jsinductions[0];
-  String pin_white = jsinduction["PINWHITE"];
-  String pin_yellow = jsinduction["PINYELLOW"];
-  String pin_blue = jsinduction["PINBLUE"];
-  String is_enabled_str = jsinduction["ENABLED"];
-  bool is_enabled_bl = false;
-  if (is_enabled_str == "1")
+  JsonObject jsinduction = jsonDocument["induction"];
+  bool is_enabled = jsinduction["ENABLED"];
+  if (is_enabled)
   {
-    is_enabled_bl = true;
+    String pin_white = jsinduction["PINWHITE"];
+    String pin_yellow = jsinduction["PINYELLOW"];
+    String pin_blue = jsinduction["PINBLUE"];
+    String js_mqtttopic = jsinduction["TOPIC"];
+    long delayoff = jsinduction["DELAY"];
+
+    inductionCooker.change(StringToPin(pin_white), StringToPin(pin_yellow), StringToPin(pin_blue), js_mqtttopic, delayoff, is_enabled);
   }
 
-  String js_mqtttopic = jsinduction["TOPIC"];
-  long delayoff = atol(jsinduction["DELAY"]);
-
-  inductionCooker.change(StringToPin(pin_white), StringToPin(pin_yellow), StringToPin(pin_blue), js_mqtttopic, delayoff, is_enabled_bl);
-
   //Read display and distance sensor
-  JsonObject &jsonI2C = json["I2C"];
+  JsonObject jsonI2C = jsonDocument["I2C"];
   useDisplay = jsonI2C["USEDISPLAY"];
   useDistanceSensor = jsonI2C["USEDISTANCESENSOR"];
   if (useDisplay || useDistanceSensor)
@@ -146,15 +142,14 @@ bool loadConfig()
   Serial.println(useDistanceSensor);
 
   // Read MQTT host
-  String json_mqtthost = json["MQTTHOST"];
+  String json_mqtthost = jsonDocument["MQTTHOST"];
   json_mqtthost.toCharArray(mqtthost, 16);
   return true;
 }
 
 bool saveConfig()
 {
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonObject &json = jsonBuffer.createObject();
+  StaticJsonDocument<1024> jsonDocument;
 
   File configFile = SPIFFS.open("/config.json", "w");
   if (!configFile)
@@ -164,30 +159,30 @@ bool saveConfig()
   }
 
   // Write actors
-  JsonArray &jsactors = json.createNestedArray("actors");
+  JsonArray jsactors = jsonDocument.createNestedArray("actors");
   for (int i = 0; i < numberOfActors; i++)
   {
-    JsonObject &jsactor = jsactors.createNestedObject();
+    JsonObject jsactor = jsactors.createNestedObject();
     jsactor["PIN"] = PinToString(actors[i].pin_actor);
     jsactor["TOPIC"] = actors[i].argument_actor;
-    jsactor["INVERTED"] = actors[i].getInverted();
+    jsactor["INVERTED"] = actors[i].isInverted;
   }
 
   // Write OneWire sensors
-  JsonArray &jsonOneWireSensors = json.createNestedArray("OneWireSensors");
+  JsonArray jsonOneWireSensors = jsonDocument.createNestedArray("OneWireSensors");
   for (int i = 0; i < numberOfOneWireSensors; i++)
   {
-    JsonObject &jsonOneWireSensor = jsonOneWireSensors.createNestedObject();
+    JsonObject jsonOneWireSensor = jsonOneWireSensors.createNestedObject();
     jsonOneWireSensor["ADDRESS"] = oneWireSensors[i].getSens_address_string();
     jsonOneWireSensor["TOPIC"] = oneWireSensors[i].mqtttopic;
     jsonOneWireSensor["OFFSET"] = oneWireSensors[i].offset;
   }
 
   // Write PT100/1000 sensors
-  JsonArray &jsonPTSensors = json.createNestedArray("PTSensors");
+  JsonArray jsonPTSensors = jsonDocument.createNestedArray("PTSensors");
   for (int i = 0; i < numberOfPTSensors; i++)
   {
-    JsonObject &jsonPTSensor = jsonPTSensors.createNestedObject();
+    JsonObject jsonPTSensor = jsonPTSensors.createNestedObject();
     jsonPTSensor["CSPIN"] = PinToString(ptSensors[i].csPin);
     jsonPTSensor["WIRES"] = ptSensors[i].numberOfWires;
     jsonPTSensor["TOPIC"] = ptSensors[i].mqttTopic;
@@ -195,24 +190,19 @@ bool saveConfig()
   }
 
   // Write induction
-  JsonArray &jsinductions = json.createNestedArray("induction");
-  JsonObject &jsinduction = jsinductions.createNestedObject();
+  JsonObject jsinduction = jsonDocument.createNestedObject("induction");
+  jsinduction["ENABLED"] = inductionCooker.isEnabled;
   if (inductionCooker.isEnabled)
   {
-    jsinduction["ENABLED"] = "1";
+    jsinduction["PINWHITE"] = PinToString(inductionCooker.PIN_WHITE);
+    jsinduction["PINYELLOW"] = PinToString(inductionCooker.PIN_YELLOW);
+    jsinduction["PINBLUE"] = PinToString(inductionCooker.PIN_INTERRUPT);
+    jsinduction["TOPIC"] = inductionCooker.mqtttopic;
+    jsinduction["DELAY"] = inductionCooker.delayAfteroff;
   }
-  else
-  {
-    jsinduction["ENABLED"] = "0";
-  }
-  jsinduction["PINWHITE"] = PinToString(inductionCooker.PIN_WHITE);
-  jsinduction["PINYELLOW"] = PinToString(inductionCooker.PIN_YELLOW);
-  jsinduction["PINBLUE"] = PinToString(inductionCooker.PIN_INTERRUPT);
-  jsinduction["TOPIC"] = inductionCooker.mqtttopic;
-  jsinduction["DELAY"] = inductionCooker.delayAfteroff;
 
   // Write display and distance sensor
-  JsonObject &jI2C = json.createNestedObject("I2C");
+  JsonObject jI2C = jsonDocument.createNestedObject("I2C");
   jI2C["USEDISPLAY"] = useDisplay;
   jI2C["USEDISTANCESENSOR"] = useDistanceSensor;
 
@@ -227,9 +217,9 @@ bool saveConfig()
   }
 
   // Write MQTT host
-  json["MQTTHOST"] = mqtthost;
+  jsonDocument["MQTTHOST"] = mqtthost;
 
-  json.printTo(configFile);
+  serializeJsonPretty(jsonDocument, configFile);
   return true;
 }
 

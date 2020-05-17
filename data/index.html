@@ -9,14 +9,14 @@
   <link rel="stylesheet" href="theme.css" type="text/css">
 </head>
 
-<body onload="setInterval(refresh, 2000)">
+<body onload="setInterval(refresh, 5000)">
 
   <!-- Header -->
   <div class="py-2">
     <div class="container">
       <div class="row">
         <div class="col">
-          <h1 class="text-center">Indebrau MQTT Device v1.2.0</h1>
+          <h1 class="text-center">Indebrau MQTT Device v1.2.1</h1>
           <button type="button" class="btn btn-outline-primary" data-target="#config_modal"
             data-toggle="modal">Configure Device</button>
           <a href="config.json" download="config.json" class="btn btn-outline-primary" id="btn_downloadConfig">Download
@@ -160,9 +160,10 @@
                     class="fa fa-fw fa-refresh"></i>
                 </button>
               </div>
-              <div class="form-group">
-                <label for="modal_sensor_offset">Sensor Offset</label>
-                <input type="number" step="0.01" class="form-control" placeholder="0" id="modal_sensor_offset">
+              <label for="modal_sensor_one_wire_offset">Sensor Offset</label>
+              <div class="input-group">
+                <input type="number" step="0.01" class="form-control" placeholder="0" id="modal_sensor_one_wire_offset">
+                <span class="input-group-text">°C</span>
               </div>
             </div>
             <div id="modal_sensor_pt_sensor">
@@ -175,9 +176,10 @@
                   <option value=4>4</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="modal_sensor_offset">Sensor Offset</label>
-                <input type="number" step="0.01" class="form-control" placeholder="0" id="modal_sensor_offset">
+              <label for="modal_sensor__PT_offset">Sensor Offset</label>
+              <div class="input-group">
+                <input type="number" step="0.01" class="form-control" placeholder="0" id="modal_sensor__PT_offset">
+                <span class="input-group-text">°C</span>
               </div>
             </div>
             <div class="form-group">
@@ -205,7 +207,7 @@
         <div class="modal-body">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" value="" id="modal_induction_enabled">
-            <label class="form-check-label" for="modal_induction_enabled"> Enable Induction </label>
+            <label for="modal_induction_enabled"> Enabled </label>
           </div>
           <div class="form-group">
             <label for="modal_induction_script">MQTT Topic</label>
@@ -223,9 +225,10 @@
             <label for="modal_induction_pinblue">PIN Blue (Backchannel)</label>
             <select class="form-control" id="modal_induction_pinblue"></select>
           </div>
-          <div class="form-group">
-            <label for="modal_induction_delay">Delay after Power off</label>
+          <label for="modal_induction_delay">Relais Shutdown After Power Off</label>
+          <div class="input-group">
             <input type="text" class="form-control" placeholder="" id="modal_induction_delay">
+            <span class="input-group-text">Seconds</span>
           </div>
         </div>
         <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_induction_btn_save">Save

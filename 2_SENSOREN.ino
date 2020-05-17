@@ -533,12 +533,11 @@ void handleRequestSensorPins()
 */
 void handleRequestSensors()
 {
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonArray &sensorsResponse = jsonBuffer.createArray();
+  StaticJsonDocument<1024> jsonDocument;
 
   for (int i = 0; i < numberOfOneWireSensors; i++)
   {
-    JsonObject &sensorResponse = jsonBuffer.createObject();
+    JsonObject sensorResponse = jsonDocument.createNestedObject();
     if ((oneWireSensors[i].value != -127.0) && (oneWireSensors[i].value != 85.0))
     {
       sensorResponse["value"] = oneWireSensors[i].getValueString();
@@ -551,12 +550,11 @@ void handleRequestSensors()
     sensorResponse["type"] = SENSOR_TYPE_ONE_WIRE;
     sensorResponse["id"] = i;
     sensorResponse["offset"] = oneWireSensors[i].offset;
-    sensorsResponse.add(sensorResponse);
     yield();
   }
   for (int i = 0; i < numberOfPTSensors; i++)
   {
-    JsonObject &sensorResponse = jsonBuffer.createObject();
+    JsonObject sensorResponse = jsonDocument.createNestedObject();
     // While it is technically possible to read this low value with a PT sensor
     // We reuse "OneWire Error Codes" here for simplicity
     if (ptSensors[i].value != -127.0)
@@ -571,12 +569,11 @@ void handleRequestSensors()
     sensorResponse["type"] = SENSOR_TYPE_PT;
     sensorResponse["id"] = i;
     sensorResponse["offset"] = ptSensors[i].offset;
-    sensorsResponse.add(sensorResponse);
     yield();
   }
   if (useDistanceSensor)
   {
-    JsonObject &sensorResponse = jsonBuffer.createObject();
+    JsonObject sensorResponse = jsonDocument.createNestedObject();
     // We reuse "OneWire Error Codes" here for simplicity
     if (distanceSensor.value != -127.0)
     {
@@ -588,11 +585,10 @@ void handleRequestSensors()
     }
     sensorResponse["mqtt"] = distanceSensor.mqttTopic;
     sensorResponse["type"] = SENSOR_TYPE_DISTANCE;
-    sensorsResponse.add(sensorResponse);
     yield();
   }
   String response;
-  sensorsResponse.printTo(response);
+  serializeJson(jsonDocument, response);
   server.send(200, "application/json", response);
 }
 
@@ -613,11 +609,10 @@ void handleRequestSensorConfig()
     }
     else
     {
-      StaticJsonBuffer<1024> jsonBuffer;
-      JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["topic"] = oneWireSensors[id].mqtttopic;
-      sensorJson["offset"] = oneWireSensors[id].offset;
-      sensorJson.printTo(response);
+      StaticJsonDocument<1024> jsonDocument;
+      jsonDocument["topic"] = oneWireSensors[id].mqtttopic;
+      jsonDocument["offset"] = oneWireSensors[id].offset;
+      serializeJson(jsonDocument, response);
       server.send(200, "application/json", response);
     }
   }
@@ -630,13 +625,12 @@ void handleRequestSensorConfig()
     }
     else
     {
-      StaticJsonBuffer<1024> jsonBuffer;
-      JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["topic"] = ptSensors[id].mqttTopic;
-      sensorJson["csPin"] = PinToString(ptSensors[id].csPin);
-      sensorJson["numberOfWires"] = ptSensors[id].numberOfWires;
-      sensorJson["offset"] = ptSensors[id].offset;
-      sensorJson.printTo(response);
+      StaticJsonDocument<1024> jsonDocument;
+      jsonDocument["topic"] = ptSensors[id].mqttTopic;
+      jsonDocument["csPin"] = PinToString(ptSensors[id].csPin);
+      jsonDocument["numberOfWires"] = ptSensors[id].numberOfWires;
+      jsonDocument["offset"] = ptSensors[id].offset;
+      serializeJson(jsonDocument, response);
       server.send(200, "application/json", response);
     }
   }
@@ -649,10 +643,9 @@ void handleRequestSensorConfig()
     }
     else
     {
-      StaticJsonBuffer<1024> jsonBuffer;
-      JsonObject &sensorJson = jsonBuffer.createObject();
-      sensorJson["topic"] = distanceSensor.mqttTopic;
-      sensorJson.printTo(response);
+      StaticJsonDocument<128> jsonDocument;
+      jsonDocument["topic"] = distanceSensor.mqttTopic;
+      serializeJson(jsonDocument, response);
       server.send(200, "application/json", response);
     }
   }

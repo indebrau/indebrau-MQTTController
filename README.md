@@ -30,7 +30,7 @@ Additionally, it is possible to use a VL53L0X ToF distance sensor for managing t
 * OneWire (by Jim Studt..) version 2.3.5
 * DallasTemperature (by Miles Burton...) version 3.8.0
 * PubSubClient (by Nick O''Leary) version 2.7.0
-* ArduinoJson (by Benoit Bianchon) version 5.13.5 (Not 6.X.X!)
+* ArduinoJson (by Benoit Bianchon) version 6.15.2
 * WiFiManager (by tzapu) version 0.15.0
 * Adafruit MAX31865 (by Adafruit) version 1.0.3
 * Adafruit SSD1306 (by Adafruit) version 2.2.1

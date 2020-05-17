@@ -21,15 +21,15 @@ public:
   byte PIN_WHITE = 9;     // RELAIS
   byte PIN_YELLOW = 9;    // AUSGABE AN PLATTE
   byte PIN_INTERRUPT = 9; // EINGABE VON PLATTE
-  int power = 0;
-  int newPower = 0;
+  byte power = 0;
+  byte newPower = 0;
   byte CMD_CUR = 0;          // Aktueller Befehl
   boolean isRelayon = false; // Systemstatus: ist das Relais in der Platte an?
   boolean isInduon = false;  // Systemstatus: ist Power > 0?
   boolean isPower = false;
   String mqtttopic = "";
   boolean isEnabled = false;
-  long delayAfteroff = 120000;
+  int delayAfteroff = 120; // in seconds
 
   Induction()
   {
@@ -123,13 +123,14 @@ public:
 
   void handlemqtt(char *payload)
   {
-    StaticJsonBuffer<128> jsonBuffer;
-    JsonObject &json = jsonBuffer.parseObject(payload);
-    if (!json.success())
+    StaticJsonDocument<128> jsonDocument;
+    DeserializationError error = deserializeJson(jsonDocument, payload);
+    if (error)
     {
+      Serial.println(error.c_str());
       return;
     }
-    String state = json["state"];
+    String state = jsonDocument["state"];
     if (state == "off")
     {
       newPower = 0;
@@ -137,7 +138,7 @@ public:
     }
     else
     {
-      newPower = atoi(json["power"]);
+      newPower = atoi(jsonDocument["power"]);
     }
   }
 
@@ -150,7 +151,7 @@ public:
     }
     if (isInduon == false && isRelayon == true)
     {
-      if (millis() > timeTurnedOff + delayAfteroff)
+      if (millis() > timeTurnedOff + (delayAfteroff * 1000))
       {
         digitalWrite(PIN_WHITE, LOW);
         return false;
@@ -261,31 +262,34 @@ inductionCooker = Induction();
 
 void handleInduction()
 {
-  inductionCooker.Update();
+  if (inductionCooker.isEnabled)
+  {
+    inductionCooker.Update();
+  }
 }
 
 void handleRequestInduction()
 {
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonObject &inductionResponse = jsonBuffer.createObject();
+  StaticJsonDocument<512> jsonDocument;
 
-  inductionResponse["enabled"] = inductionCooker.isEnabled;
+  jsonDocument["enabled"] = inductionCooker.isEnabled;
   if (inductionCooker.isEnabled)
   {
-    inductionResponse["relayOn"] = inductionCooker.isRelayon;
-    inductionResponse["power"] = inductionCooker.power;
-    inductionResponse["relayOn"] = inductionCooker.isRelayon;
+    jsonDocument["relayOn"] = inductionCooker.isRelayon;
+    jsonDocument["power"] = inductionCooker.power;
+    jsonDocument["relayOn"] = inductionCooker.isRelayon;
+    jsonDocument["topic"] = inductionCooker.mqtttopic;
     if (inductionCooker.isPower)
     {
-      inductionResponse["powerLevel"] = inductionCooker.CMD_CUR;
+      jsonDocument["powerLevel"] = inductionCooker.CMD_CUR;
     }
     else
     {
-      inductionResponse["powerLevel"] = max(0, inductionCooker.CMD_CUR - 1);
+      jsonDocument["powerLevel"] = max(0, inductionCooker.CMD_CUR - 1);
     }
   }
   String response;
-  inductionResponse.printTo(response);
+  serializeJson(jsonDocument, response);
   server.send(200, "application/json", response);
 }
 

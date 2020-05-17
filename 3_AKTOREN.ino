@@ -1,7 +1,6 @@
 class Actor
 {
   unsigned long powerLast; // Zeitmessung für High oder Low
-  bool isInverted = false;
   int dutycycle_actor = 5000;
   byte OFF;
   byte ON;
@@ -11,8 +10,9 @@ public:
   String argument_actor;
   byte power_actor;
   bool isOn;
+  bool isInverted = false;
 
-  Actor(String pin, String argument, String inverted)
+  Actor(String pin, String argument, bool inverted)
   {
     change(pin, argument, inverted);
   }
@@ -43,7 +43,7 @@ public:
     }
   }
 
-  void change(String pin, String argument, String inverted)
+  void change(String pin, String argument, bool inverted)
   {
     // set old pin to high
     if (isPin(pin_actor))
@@ -70,13 +70,13 @@ public:
       mqtt_subscribe();
     }
 
-    if (inverted == "1")
+    if (inverted)
     {
-      isInverted = true;
+      isInverted = inverted;
       ON = HIGH;
       OFF = LOW;
     }
-    if (inverted == "0")
+    else
     {
       isInverted = false;
       ON = LOW;
@@ -110,15 +110,16 @@ public:
 
   void handlemqtt(char *payload)
   {
-    StaticJsonBuffer<128> jsonBuffer;
-    JsonObject &json = jsonBuffer.parseObject(payload);
+    StaticJsonDocument<128> jsonDocument;
+    DeserializationError error = deserializeJson(jsonDocument, payload);
 
-    if (!json.success())
+    if (error)
     {
+      Serial.println(error.c_str());
       return;
     }
 
-    String state = json["state"];
+    String state = jsonDocument["state"];
 
     if (state == "off")
     {
@@ -129,37 +130,25 @@ public:
 
     if (state == "on")
     {
-      int newpower = atoi(json["power"]);
+      int newpower = atoi(jsonDocument["power"]);
       isOn = true;
       power_actor = min(100, newpower);
       power_actor = max(0, newpower);
       return;
     }
   }
-
-  String getInverted()
-  {
-    if (isInverted)
-    {
-      return "1";
-    }
-    else
-    {
-      return "0";
-    }
-  };
 };
 
 /* Initialisierung des Arrays */
 Actor actors[NUMBER_OF_ACTORS_MAX] = {
-    Actor("", "", ""),
-    Actor("", "", ""),
-    Actor("", "", ""),
-    Actor("", "", ""),
-    Actor("", "", ""),
-    Actor("", "", "")};
+    Actor("", "", false),
+    Actor("", "", false),
+    Actor("", "", false),
+    Actor("", "", false),
+    Actor("", "", false),
+    Actor("", "", false)};
 
-/* Funktionen für Loop */
+/* Loop */
 void handleActors()
 {
   for (int i = 0; i < numberOfActors; i++)
@@ -172,22 +161,20 @@ void handleActors()
 /* Funktionen für Web */
 void handleRequestActors()
 {
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonArray &actorsResponse = jsonBuffer.createArray();
-
+  StaticJsonDocument<1024> jsonDocument;
   for (int i = 0; i < numberOfActors; i++)
   {
-    JsonObject &actorResponse = jsonBuffer.createObject();
+    JsonObject actorResponse = jsonDocument.createNestedObject();
     actorResponse["status"] = actors[i].isOn;
     actorResponse["power"] = actors[i].power_actor;
     actorResponse["mqtt"] = actors[i].argument_actor;
     actorResponse["pin"] = PinToString(actors[i].pin_actor);
-    actorsResponse.add(actorResponse);
     yield();
   }
 
   String response;
-  actorsResponse.printTo(response);
+  serializeJson(jsonDocument, response);
+
   server.send(200, "application/json", response);
 }
 
@@ -216,7 +203,7 @@ void handleRequestActorConfig()
     }
     if (request == "inverted")
     {
-      message = actors[id].getInverted();
+      message = actors[id].isInverted;
       goto SendMessage;
     }
     message = "not found";
@@ -237,7 +224,7 @@ void handleSetActor()
 
   String ac_pin = PinToString(actors[id].pin_actor);
   String ac_argument = actors[id].argument_actor;
-  String ac_isinverted = actors[id].getInverted();
+  bool ac_isinverted = actors[id].isInverted;
 
   for (int i = 0; i < server.args(); i++)
   {
@@ -251,7 +238,14 @@ void handleSetActor()
     }
     if (server.argName(i) == "inverted")
     {
-      ac_isinverted = server.arg(i);
+      if (server.arg(i) == "true")
+      {
+        ac_isinverted = true;
+      }
+      else
+      {
+        ac_isinverted = false;
+      }
     }
     yield();
   }
@@ -269,11 +263,11 @@ void handleDelActor()
   {
     if (i == NUMBER_OF_ACTORS_MAX - 1)
     {
-      actors[i].change("", "", "");
+      actors[i].change("", "", false);
     }
     else
     {
-      actors[i].change(PinToString(actors[i + 1].pin_actor), actors[i + 1].argument_actor, actors[i + 1].getInverted());
+      actors[i].change(PinToString(actors[i + 1].pin_actor), actors[i + 1].argument_actor, actors[i + 1].isInverted);
     }
   }
 

@@ -38,7 +38,7 @@ void getOtherPins()
   String returnMessage;
   if (numberOfPTSensors > 0)
   {
-    returnMessage += "Using PT sensors. Pins for  DI, DO and CLK are ";
+    returnMessage += "Pins for PT sensors (DI, DO and CLK) are ";
     returnMessage += PinToString(PT_PINS[0]) + ", " + PinToString(PT_PINS[1]) + ", " + PinToString(PT_PINS[2]) + ". ";
   }
   else
@@ -47,7 +47,7 @@ void getOtherPins()
   }
   if (numberOfOneWireSensors > 0)
   {
-    returnMessage += "Using OneWire sensors. OneWire bus is on pin " + PinToString(ONE_WIRE_BUS) + ".";
+    returnMessage += "OneWire bus is on pin " + PinToString(ONE_WIRE_BUS) + ".";
   }
   else
   {
@@ -59,10 +59,10 @@ void getOtherPins()
 void getSysConfig()
 {
   String mqttAddress(mqtthost);
-  StaticJsonBuffer<1024> jsonBuffer;
-  JsonObject &config = jsonBuffer.createObject();
-  config["mqttAddress"] = mqttAddress;
-  config["useDisplay"] = useDisplay;
+  StaticJsonDocument<1024> jsonDocument;
+
+  jsonDocument["mqttAddress"] = mqttAddress;
+  jsonDocument["useDisplay"] = useDisplay;
 
   // get list of free pins
   String freePins = "";
@@ -96,11 +96,11 @@ void getSysConfig()
   SCLPinMessage += freePins;
 
   // add both to json
-  config["SDAPin"] = SDAPinMessage;
-  config["SCLPin"] = SCLPinMessage;
+  jsonDocument["SDAPin"] = SDAPinMessage;
+  jsonDocument["SCLPin"] = SCLPinMessage;
 
   String response;
-  config.printTo(response);
+  serializeJson(jsonDocument, response);
   server.send(200, "application/json", response);
 }
 

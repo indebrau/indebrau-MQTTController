@@ -23,9 +23,9 @@ function refresh() {
           sensor += element.value + " unknown unit";
         }
       }
-      sensor += " </span> <span class='badge badge-info'> ";
+      sensor += " </span> <span class='badge badge-light'> ";
       sensor += element.mqtt;
-      sensor += " </span> <span class='badge badge-info'> ";
+      sensor += " </span> <span class='badge badge-light'> ";
       sensor += element.type;
       sensor +=
         " </span> <a href='' class='badge badge-warning' data-toggle='modal' data-target='#sensor_modal' data-id='";
@@ -47,17 +47,17 @@ function refresh() {
     data.forEach(function (element, index) {
       let actor =
         "<li class='list-group-item d-flex justify-content-between align-items-center'> ";
-      actor += " </span> <span class='badge";
+      actor += " </span> <span class='badge ";
       if (element.status == true) {
-        actor += "badge-success'> ON:";
+        actor += "badge-success'> ON: ";
         actor += element.power;
         actor += "%";
       } else {
-        actor += "badge-dark'> OFF";
+        actor += "badge-danger'> OFF";
       }
       actor += "</span> <span class='badge badge-light'>";
       actor += element.mqtt;
-      actor += "</span> <span class='badge badge-light'> PIN";
+      actor += "</span> <span class='badge badge-light'> PIN ";
       actor += element.pin;
       actor +=
         "</span> <a href='' class='badge badge-warning' data-toggle='modal' data-target='#actor_modal' data-id='";
@@ -71,18 +71,21 @@ function refresh() {
     let inductionRender =
       "<li class='list-group-item d-flex justify-content-between align-items-center'> ";
     if (data.enabled) {
-      inductionRender += " Relais status <span class='badge";
+      inductionRender += " Relais Status <span class='badge";
       if (data.relayOn) {
         inductionRender += " badge-success'> ON";
       } else {
         inductionRender += " badge-danger'> OFF";
       }
       inductionRender +=
-        "</span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> Power requested <span class='badge badge-success'>";
+        "</span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> Power Requested <span class='badge badge-success'>";
       inductionRender += data.power;
       inductionRender +=
         "%</span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> Current Power Level <span class='badge badge-success'> P";
       inductionRender += data.powerLevel;
+      inductionRender +=
+      "</span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> MQTT Topic <span class='badge badge-light'> ";
+    inductionRender += data.topic;
       inductionRender +=
         " </span> </li> <li class='list-group-item d-flex justify-content-between align-items-center'> </li>";
     } else {
@@ -113,18 +116,21 @@ $("#actor_modal").on("show.bs.modal", function (event) {
     async: false,
     cache: false,
     success: function (data) {
-      actorinverted = data;
+      // fixMe: Let firmware return boolean values
+      if(data == "1"){
+        actorinverted = true;
+      }
+      else{
+        actorInverted = false;
+      }
     },
   });
   var modal = $(this);
   modal.attr("actor_id", actorid);
   modal.find("#modal_actor_script").val(actorscript);
   $("#modal_actor_pin").load("/reqActorPins?id=" + actorid);
-  if (actorinverted == "1") {
-    modal.find("#modal_actor_inverted").prop("checked", true);
-  } else {
-    modal.find("#modal_actor_inverted").prop("checked", false);
-  }
+  modal.find("#modal_actor_inverted").prop("checked", actorinverted);
+
 });
 
 /* click on save actor button in edit window */
@@ -132,14 +138,10 @@ $("#modal_actor_btn_save").click(function () {
   var modal = $("#actor_modal");
   var actorscript = modal.find("#modal_actor_script").val();
   var actorpin = modal.find("#modal_actor_pin").val();
-  if (modal.find("#modal_actor_inverted").prop("checked") == true) {
-    var actorinverted = "1";
-  } else {
-    var actorinverted = "0";
-  }
+  var actorInverted = modal.find("#modal_actor_inverted").prop("checked");
   var actorid = modal.attr("actor_id");
   $.ajax({
-    url: `/setActor?id=${actorid}&script=${actorscript}&pin=${actorpin}&inverted=${actorinverted}`,
+    url: `/setActor?id=${actorid}&script=${actorscript}&pin=${actorpin}&inverted=${actorInverted}`,
     type: "POST",
     async: false,
     cache: false,
@@ -172,7 +174,8 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
   // reset fields for new sensor creation request
   if (sensorId == -1) {
     modal.find("#modal_sensor_topic").val("");
-    modal.find("#modal_sensor_offset").val("");
+    modal.find("#modal_sensor__PT_offset").val("");
+    modal.find("#modal_sensor_one_wire_offset").val("");
   }
   if (sensorType == "OneWire") {
     // ui adjustments
@@ -191,7 +194,7 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
         success: function (data) {
           var modal = $(this);
           modal.find("#modal_sensor_topic").val(data.topic);
-          modal.find("#modal_sensor_offset").val(data.offset);
+          modal.find("#modal_sensor_one_wire_offset").val(data.offset);
         },
       });
     }
@@ -215,7 +218,7 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
         success: function (data) {
           var modal = $(this);
           modal.find("#modal_sensor_topic").val(data.topic);
-          modal.find("#modal_sensor_offset").val(data.offset);
+          modal.find("#modal_sensor__PT_offset").val(data.offset);
           modal.find("#modal_sensor_number_of_wires").val(data.numberOfWires);
         },
       });
@@ -246,11 +249,12 @@ $("#sensor_modal").on("show.bs.modal", function (event) {
 $("#modal_sensor_btn_save").click(function () {
   var modal = $("#sensor_modal");
   var sensorTopic = modal.find("#modal_sensor_topic").val();
-  var sensorOffset = modal.find("#modal_sensor_offset").val();
+
   var sensorId = modal.attr("sensor_id");
   var sensorType = modal.attr("sensor_type");
   if (sensorType == "OneWire") {
     var sensorAddress = modal.find("#modal_sensor_address").val();
+    var sensorOffset = modal.find("#modal_sensor_one_wire_offset").val();
     $.ajax({
       url:
         `/setSensor?type=${sensorType}&topic=${sensorTopic}&id=${sensorId}` +
@@ -262,6 +266,7 @@ $("#modal_sensor_btn_save").click(function () {
   } else if (sensorType == "PTSensor") {
     var csPin = modal.find("#modal_sensor_cs_pin").val();
     var numberOfWires = modal.find("#modal_sensor_number_of_wires").val();
+    var sensorOffset = modal.find("#modal_sensor__PT_offset").val();
     $.ajax({
       url:
         `/setSensor?type=${sensorType}&topic=${sensorTopic}&id=${sensorId}` +
@@ -398,11 +403,7 @@ $("#config_modal").on("show.bs.modal", function () {
     cache: false,
     success: function (data) {
       modal.find("#modal_mqtt_address").val(data.mqttAddress);
-      if (data.useDisplay) {
-        modal.find("#modal_use_display").prop("checked", true);
-      } else {
-        modal.find("#modal_use_display").prop("checked", false);
-      }
+      modal.find("#modal_use_display").prop("checked", data.useDisplay);
       modal.find("#modal_SDA_pin").html(data.SDAPin);
       modal.find("#modal_SCL_pin").html(data.SCLPin);
     },
@@ -416,12 +417,7 @@ $("#modal_config_btn_save").click(function () {
   var mqttAddress = modal.find("#modal_mqtt_address").val();
   var SDAPin = modal.find("#modal_SDA_pin").val();
   var SCLPin = modal.find("#modal_SCL_pin").val();
-
-  if (modal.find("#modal_use_display").prop("checked") == true) {
-    var useDisplay = true;
-  } else {
-    var useDisplay = false;
-  }
+  var useDisplay = modal.find("#modal_use_display").prop("checked");
 
   $.ajax({
     url:

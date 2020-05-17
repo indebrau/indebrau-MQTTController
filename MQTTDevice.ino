@@ -43,9 +43,9 @@
 #include <ArduinoOTA.h>
 
 /*########## CONSTANTS #########*/
-const String DEVICE_VERSION = "v1.2.0 (10.05.2020)";
+const String DEVICE_VERSION = "v1.2.1 (17.05.2020)";
 
-const byte ONE_WIRE_BUS = D8; // default PIN for initialization, in the future to be configured via Web frontend
+const byte ONE_WIRE_BUS = D3; // default PIN for initialization, in the future to be configured via Web frontend
 
 /*
  * Common pins across all PT100/1000 sensors: DI, DO, CLK.
@@ -54,7 +54,7 @@ const byte ONE_WIRE_BUS = D8; // default PIN for initialization, in the future t
 */
 const byte PT_PINS[3] = {D4, D3, D0};
 
-const byte ONE_WIRE_RESOLUTION = 10; // ranges betwee 9 and 12, higher is better (and slower)
+const byte ONE_WIRE_RESOLUTION = 11; // ranges betwee 9 and 12, higher is better (and slower)
 const float RREF = 430.0;            // 430.0 for PT100 and 4300.0 for PT1000
 const float RNOMINAL = 100.0;        // 100.0 for PT100, 1000.0 for PT1000
 const byte DEFAULT_CS_PIN = D1;      // default pin for the CS of a PT sensor (placeholder)
