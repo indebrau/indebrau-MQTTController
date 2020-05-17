@@ -17,7 +17,7 @@ public:
     change(pin, argument, inverted);
   }
 
-  void Update()
+  void update()
   {
     if (isPin(pin_actor))
     {
@@ -115,6 +115,7 @@ public:
 
     if (error)
     {
+      Serial.print("Error reading JSON: ");
       Serial.println(error.c_str());
       return;
     }
@@ -127,10 +128,9 @@ public:
       power_actor = 0;
       return;
     }
-
-    if (state == "on")
+    else if (state == "on")
     {
-      int newpower = atoi(jsonDocument["power"]);
+      int newpower = jsonDocument["power"];
       isOn = true;
       power_actor = min(100, newpower);
       power_actor = max(0, newpower);
@@ -153,7 +153,7 @@ void handleActors()
 {
   for (int i = 0; i < numberOfActors; i++)
   {
-    actors[i].Update();
+    actors[i].update();
     yield();
   }
 }

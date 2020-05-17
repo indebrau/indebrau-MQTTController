@@ -26,6 +26,7 @@ bool loadConfig()
   DeserializationError error = deserializeJson(jsonDocument, buf.get());
   if (error)
   {
+    Serial.print("Error reading JSON: ");
     Serial.println(error.c_str());
     return false;
   }

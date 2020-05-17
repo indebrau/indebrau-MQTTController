@@ -24,11 +24,11 @@ public:
   byte power = 0;
   byte newPower = 0;
   byte CMD_CUR = 0;          // Aktueller Befehl
-  boolean isRelayon = false; // Systemstatus: ist das Relais in der Platte an?
-  boolean isInduon = false;  // Systemstatus: ist Power > 0?
-  boolean isPower = false;
+  bool isRelayOn = false;
+  bool isInduOn = false;  // Systemstatus: ist Power > 0?
+  bool isPower = false;
   String mqtttopic = "";
-  boolean isEnabled = false;
+  bool isEnabled = false;
   int delayAfteroff = 120; // in seconds
 
   Induction()
@@ -127,6 +127,7 @@ public:
     DeserializationError error = deserializeJson(jsonDocument, payload);
     if (error)
     {
+      Serial.print("Error reading JSON: ");
       Serial.println(error.c_str());
       return;
     }
@@ -136,20 +137,20 @@ public:
       newPower = 0;
       return;
     }
-    else
+    else if (state == "on")
     {
-      newPower = atoi(jsonDocument["power"]);
+      newPower = jsonDocument["power"];
     }
   }
 
   bool updateRelay()
   {
-    if (isInduon == true && isRelayon == false)
+    if (isInduOn == true && isRelayOn == false)
     {
       digitalWrite(PIN_WHITE, HIGH);
       return true;
     }
-    if (isInduon == false && isRelayon == true)
+    if (isInduOn == false && isRelayOn == true)
     {
       if (millis() > timeTurnedOff + (delayAfteroff * 1000))
       {
@@ -157,20 +158,20 @@ public:
         return false;
       }
     }
-    if (isInduon == false && isRelayon == false)
+    if (isInduOn == false && isRelayOn == false)
     { /* Ist aus, bleibt aus. */
       return false;
     }
     return true; /* Ist an, bleibt an. */
   }
 
-  void Update()
+  void update()
   {
     updatePower();
 
-    isRelayon = updateRelay();
+    isRelayOn = updateRelay();
 
-    if (isInduon && power > 0)
+    if (isInduOn && power > 0)
     {
       if (millis() > powerLast + powerSampletime)
       {
@@ -187,7 +188,7 @@ public:
         isPower = true;
       }
     }
-    else if (isRelayon)
+    else if (isRelayOn)
     {
       sendCommand(CMD[0]);
     }
@@ -197,24 +198,24 @@ public:
   {
     lastCommand = millis();
     if (power != newPower)
-    { /* Neuen Befehl empfangen */
+    {
       if (newPower > 100)
       {
-        newPower = 100; /* Nicht > 100 */
+        newPower = 100;
       }
       if (newPower < 0)
       {
-        newPower = 0; /* Nicht < 0 */
+        newPower = 0;
       }
       power = newPower;
       timeTurnedOff = 0;
-      isInduon = true;
+      isInduOn = true;
       long difference = 0;
       if (power == 0)
       {
         CMD_CUR = 0;
         timeTurnedOff = millis();
-        isInduon = false;
+        isInduOn = false;
         difference = 0;
         goto setPowerLevel;
       }
@@ -264,7 +265,7 @@ void handleInduction()
 {
   if (inductionCooker.isEnabled)
   {
-    inductionCooker.Update();
+    inductionCooker.update();
   }
 }
 
@@ -275,9 +276,9 @@ void handleRequestInduction()
   jsonDocument["enabled"] = inductionCooker.isEnabled;
   if (inductionCooker.isEnabled)
   {
-    jsonDocument["relayOn"] = inductionCooker.isRelayon;
+    jsonDocument["relayOn"] = inductionCooker.isRelayOn;
     jsonDocument["power"] = inductionCooker.power;
-    jsonDocument["relayOn"] = inductionCooker.isRelayon;
+    jsonDocument["relayOn"] = inductionCooker.isRelayOn;
     jsonDocument["topic"] = inductionCooker.mqtttopic;
     if (inductionCooker.isPower)
     {
