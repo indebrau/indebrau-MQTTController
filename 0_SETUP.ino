@@ -5,9 +5,9 @@ void setup()
 
   // load SPIF file system
   ESP.wdtFeed();
-  if (!SPIFFS.begin())
+  if (!LittleFS.begin())
   {
-    Serial.println("SPIFFS mount failed");
+    Serial.println("LittleFS mount failed");
   }
 
   // load settings from config.json

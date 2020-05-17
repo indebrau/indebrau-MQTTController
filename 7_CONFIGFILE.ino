@@ -1,6 +1,6 @@
 bool loadConfig()
 {
-  File configFile = SPIFFS.open("/config.json", "r");
+  File configFile = LittleFS.open("/config.json", "r");
   if (!configFile)
   {
     Serial.println("Failed to open config file! (does it exist?)");
@@ -151,7 +151,7 @@ bool saveConfig()
 {
   StaticJsonDocument<1024> jsonDocument;
 
-  File configFile = SPIFFS.open("/config.json", "w");
+  File configFile = LittleFS.open("/config.json", "w");
   if (!configFile)
   {
     Serial.println("Failed to open config file for writing!");

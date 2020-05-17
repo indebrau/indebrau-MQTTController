@@ -18,7 +18,7 @@
 #include <OneWire.h>           // OneWire communication
 #include <DallasTemperature.h> // easier usage of DS18B20 sensors
 
-// display
+// display and distance sensor
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
@@ -34,8 +34,8 @@
 #include <PubSubClient.h>     // MQTT
 #include <EEPROM.h>           // stores the config file
 
-#include <FS.h>          // SPIFFS access
-#include <ArduinoJson.h> // JSON support
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 
 // OTA
 #include <ESP8266mDNS.h>

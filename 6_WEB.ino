@@ -6,7 +6,7 @@ void handleRoot()
 
 void handleWebRequests()
 {
-  if (loadFromSpiffs(server.uri()))
+  if (loadFromLittleFS(server.uri()))
   {
     return;
   }
@@ -25,7 +25,7 @@ void handleWebRequests()
   server.send(404, "text/plain", message);
 }
 
-bool loadFromSpiffs(String path)
+bool loadFromLittleFS(String path)
 {
   String dataType = "text/plain";
   if (path.endsWith("/"))
@@ -56,11 +56,11 @@ bool loadFromSpiffs(String path)
   else if (path.endsWith(".zip"))
     dataType = "application/zip";
 
-  if (!SPIFFS.exists(path.c_str()))
+  if (!LittleFS.exists(path.c_str()))
   {
     return false;
   }
-  File dataFile = SPIFFS.open(path.c_str(), "r");
+  File dataFile = LittleFS.open(path.c_str(), "r");
   if (server.hasArg("download"))
     dataType = "application/octet-stream";
   if (server.streamFile(dataFile, dataType) != dataFile.size())
