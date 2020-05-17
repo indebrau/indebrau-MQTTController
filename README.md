@@ -32,9 +32,9 @@ Additionally, it is possible to use a VL53L0X ToF distance sensor for managing t
 * PubSubClient (by Nick O''Leary) version 2.7.0
 * ArduinoJson (by Benoit Bianchon) version 6.15.2
 * WiFiManager (by tzapu) version 0.15.0
-* Adafruit MAX31865 (by Adafruit) version 1.0.3
+* Adafruit MAX31865 (by Adafruit) version 1.1.0
 * Adafruit SSD1306 (by Adafruit) version 2.2.1
-* Adafruit_VL53L0X.h (by Adafruit) version 1.0.7
+* Adafruit_VL53L0X (by Adafruit) version 1.0.8
 
 ## Limitations
 * Display has to be 128x32 px

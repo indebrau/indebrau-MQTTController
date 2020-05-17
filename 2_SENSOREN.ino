@@ -534,7 +534,8 @@ void handleRequestSensorPins()
 void handleRequestSensors()
 {
   StaticJsonDocument<1024> jsonDocument;
-
+  jsonDocument.to<JsonArray>(); // needed to prevent "null" responses
+  
   for (int i = 0; i < numberOfOneWireSensors; i++)
   {
     JsonObject sensorResponse = jsonDocument.createNestedObject();
