@@ -1,16 +1,17 @@
 # Indebrau MQTTDevice
 
-<img src="img/screenshot.jpg" alt="drawing" height="400"/>
-<img src="img/screenshot2.jpg" alt="drawing" height="400"/>
+<img src="img/screenshot.png" alt="drawing" height="400"/>
 
 
 ## Introduction
+
 The Indebrau MQTTDevice is an Arduino sketch based on the ESP8266 to enable stable wireless communication between [CraftBeerPi V3](https://github.com/Manuel83/craftbeerpi3) with actors and sensors, based on the MQTT protocol.
 It is based on the initial MQTTDevice project, started here [here](https://github.com/matschie1/MQTTDevice) and continued here [here](https://github.com/MQTTDevice/MQTTDevice).
 The main feature difference is the support of the more accurate (yet a little more expensive) PT100/1000 RTD sensors, using Adafruit's "Temperature Sensor Amplifier MAX31865" sensor breakout board and library.
 Additionally, it is possible to use a VL53L0X ToF distance sensor for managing the fill level of a kettle, which works great together with [this CBPi plugin](https://github.com/indebrau/cbpi-LauteringAutomation).
 
 ## Features
+
 * Sensors
   * PT100/1000
   * OneWire
@@ -25,9 +26,11 @@ Additionally, it is possible to use a VL53L0X ToF distance sensor for managing t
 * Fully configurable (sensors, induction cooker usage, actors, host ip, display usage..) via Web interface
 
 ## Wiring, PCBs and Cases
+
 (to come, check out the different controller repositories for (currently) undocumented 3d-print case- and pcb layouts)
 
 ## Needed Libraries (please install in Ardunio before flashing)
+
 * esp8266 (by ESP8266 Community) version 2.7.1 (the board)
 * OneWire (by Jim Studt..) version 2.3.5
 * DallasTemperature (by Miles Burton...) version 3.8.0
@@ -39,9 +42,10 @@ Additionally, it is possible to use a VL53L0X ToF distance sensor for managing t
 * Adafruit_VL53L0X (by Adafruit) version 1.0.8
 
 ## Limitations
+
 * Display has to be 128x32 px
 * Display will always show the value of the first sensor readings.
 
 ## Setup
-[German Tutorial, slightly outdated](https://hobbybrauer.de/forum/viewtopic.php?f=58&t=19036&p=309196#p309196)
+
 (more to come)
