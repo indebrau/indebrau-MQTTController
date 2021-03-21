@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <title>MQTT Device</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="font-awesome.min.css" type="text/css">
+  <link rel="stylesheet" href="fontawesome.min.css" type="text/css">
   <link rel="stylesheet" href="theme.css" type="text/css">
 </head>
 
@@ -18,7 +18,7 @@
         <div class="col">
           <h1 class="text-center">
             <span><img src="logo.png" height="60" alt="Indebrau Hopfi"></span><span id="name"></span><br>
-            MQTT Device v1.2.1
+            MQTT Device v1.3.0
           </h1>
           <button type="button" class="btn btn-outline-primary" data-target="#config_modal"
             data-toggle="modal">Configure Device</button>
@@ -139,7 +139,8 @@
         <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_actor_btn_save">Save
             Changes</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> <button type="button"
-            class="btn btn-danger" id="modal_actor_btn_delete">Delete Actor</button></div>
+            class="btn btn-danger" id="modal_actor_btn_delete">Delete Actor</button>
+        </div>
       </div>
     </div>
   </div>
@@ -193,7 +194,8 @@
         </div>
         <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal_sensor_btn_save">Save
             Changes</button> <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-danger" id="modal_sensor_btn_delete">Delete Sensor</button> </div>
+          <button type="button" class="btn btn-danger" id="modal_sensor_btn_delete">Delete Sensor</button>
+        </div>
       </div>
     </div>
   </div>
@@ -281,8 +283,8 @@
     </div>
   </div>
 
-  <script src="jquery-3.4.1.min.js"></script>
+  <script src="jquery-3.6.0.min.js"></script>
   <script src="bootstrap.bundle.min.js"></script>
-  <script src="mqttDevice.js"></script>
+  <script src="mqttController.js"></script>
 
 </html>

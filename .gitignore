@@ -1,8 +1,3 @@
+.pio
+.vscode/*
 .DS_Store
-.vscode/c_cpp_properties.json
-.vscode/arduino.json
-spiffs.image
-/data/config.json
-.vscode/settings.json
-data/.vscode/arduino.json
-data/.vscode/c_cpp_properties.json
